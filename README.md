@@ -1,26 +1,28 @@
 ---
 description: >-
-  Este documento son mis notas personales del curso de fundamentos de ETL con Python y Pentaho. Agradezco al Platzi Team y especialmente al profesor Carlos Alarcón este curso.
+  Este documento son mis notas personales del curso de Data Warehousing y modelado OLAP. Agradezco al Platzi Team y especialmente al profesor Edison Yepes este curso.
 ---
 
 # Resumen
 
-**¿Por qué debería aprender esto?**
+**¿Por qué debería aprender esto?**  
 
-Porque los datos no siempre están listos para trabajarlos en procesos de analítica y Machine Learning. Debemos aprender a preparar datos crudos a través de un flujo ETL en nuestras tareas en ingeniería de datos. Utilizaremos Python y herramientas low-code como Pentaho con Carlos Alarcón como profesor  
+Para saber contruir la infraestructura de un Data Warehouse, una base de datos especializada para analítica. Debemos aprender a través de la creación de un proyecto, desde su modelado hasta su implementación. Utilizaremos Python y herramientas low-code como Pentaho con Edison Yepes como profesor  
 
 **Desafío**
 
-* Estructurar un flujo ETL y su arquitectura  
-* Aplicar Python y Pandas para flujos ETL  
-* Extraer, transformar y cargar datos para analítica  
+* Crear modelos dimensionales OLAP y tabla de hechos.  
+* Desarrollar un ETL para inserción de datos en un data warehouse.  
+* Explorar las bases del data warehousing y su relación con el negocio.  
 
 **Lo que necesitamos saber**
 
 * Programación en Python  
 * Manipulación y transformación de datos con Pandas y Numpy  
-* Bases de datos SQL  
-* Fundamentos de cloud computing con AWS  
+* Bases de datos SQL
+* Fundamentos de cloud computing con AWS
+* Fundamentos de ETL
+* AWS CLI e IAM
 
 **Software para este curso**  
 
@@ -33,13 +35,17 @@ Porque los datos no siempre están listos para trabajarlos en procesos de analí
 * Cuenta de AWS  
 * PostgreSQL  
 * Anaconda  
+* Pentaho Data Integration
+* DBeaver, DataGrip o DataSpell
+* AWS CLI
+* Java Development Kit
 
 **Proyecto del curso**
 
-* ***Flujo ETL para ingeniería de datos***  
+* ***Arquitectura y ETL de Data Warehouse de ventas***  
 
-    Crear nuestro ETL y entender todo el proceso de extracción desde una BD transaccional OLTP y otras fuentes de datos como archivos CSV y JSON. Transformar y limpiar los datos y cargarlos en BD en la nube especializadas para analítica de tipo OLAP. Usar Python y Pentaho como herramientas de ETL  
-
+    Modelar la arquitectura de datos y crear las tablas de la base de datos OLAP, donde se almacenará información de ventas para BI. Crear el ETL para insertar los datos usando Pentaho Data Integration, SQL y AWS Redshift  
+    
 **¿Por qué en español?**
 
 El español es el cuarto idioma más hablado en el mundo y es parte de mi cultura. ¡Eso es todo amigos!

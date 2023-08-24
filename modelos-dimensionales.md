@@ -305,9 +305,23 @@ _Dimensión_
 
 ### Tipos de SDC
 
+- **_Tipo 0_**: Conserva el original.
 - **_Tipo 1_**: Sobreescribir el atributo actualizado. Es decir, no guarda historia.  
 - **_Tipo 2_**: Agrega un nuevo registro con el cambio. Es decir, guarda historia.  
-- **_Tipo 3_**: Agrega un nuevo atributo “anterior”. Es decir, guarda historia, pero agregando una nueva columna por el atributo anterior y el modificado.
+- **_Tipo 3_**: Agrega un nuevo atributo “anterior”. Es decir, guarda historia, pero agregando una nueva columna por el atributo anterior y el modificado.  
+- **_Tipo 4_**: Historial separado. El SCD-4 suele utilizarse con "tablas históricas". Este método se asemeja a cómo funcionan las tablas de auditoría de bases de datos y las técnicas de captura de datos de cambios.  
+- **_Tipo 5_**: El SCD-5 combina los enfoques de los tipos 1 y 4 (1+4=5).   
+- **_Tipo 6_**: El SCD-6 combina los enfoques de los tipos 1, 2 y 3 (1+2+3=6).  
+
+La elección del tipo de dimensión cambiante lentamente a utilizar depende de los requisitos específicos del almacén de datos y las necesidades de análisis. Es importante considerar factores como la importancia de los datos históricos, la frecuencia de los cambios en la dimensión y las implicaciones de almacenamiento y rendimiento de cada enfoque.
+
+Las SCD son un aspecto crucial de los almacenes de datos, ya que permiten representar datos a lo largo del tiempo, lo que permite un análisis e informes históricos precisos.
+
+## SDC-0
+
+Los atributos de la dimensión de tipo 0 nunca cambian y se asignan a atributos que tienen valores duraderos o que se describen como "Originales".  
+Ejemplos: fecha de nacimiento, puntuación de crédito original.  
+El tipo 0 se aplica a la mayoría de los atributos de tamaño de fecha.
 
 ## SCD-1
 
@@ -411,14 +425,48 @@ Tabla Transaccional
 | EST12345          | Pepito Perez        | Ingeniería   |
 
 
-| **Id_Estudiante** | **Cod_Estudiante** | Nombre Completo | **Facultad_old** | **Facultad_new** |
-| :---------------: | :----------------: | :-------------- | :--------------: | :-------------:  |
-| 1                 | EST12345           | Pepito Perez    | Marketing        |  Ingeniería      |
+| **Id_Estudiante** | **Cod_Estudiante** | **Nombre Completo** | **Facultad_old** | **Facultad_new** |
+| :---------------: | :----------------: | :------------------ | :--------------: | :-------------:  |
+| 1                 | EST12345           | Pepito Perez        | Marketing        |  Ingeniería      |
 
 Los Tipo 3 SCD se utilizan cuando es importante realizar un seguimiento de cambios específicos de atributos mientras se mantiene la simplicidad en el modelo de datos.
 
+## SCD-4 (Historial separado)
 
-Reto: Combinar SCD-2 y 3
+El SCD-4 suele utilizarse con "tablas históricas", donde una tabla conserva los datos actuales y se utiliza una tabla adicional (**_dim table_**) para mantener un registro de algunos o todos los cambios.  
+Ambas claves sustitutivas se hacen referencia a la **_fact table_** para mejorar el rendimiento de la consulta.
+
+Para el siguiente ejemplo, el nombre de la tabla original es Proveedores y la tabla historica es Histórica_Proveedores:
+
+  124	ABC	Acme & Johnson Supply Co	IL
+
+Proveedores (**_dim table_**)
+
+| **SK**  |**Key**  | **Nombre**                   | **Estado** |
+| :-----: | :------ | :--------------------------- | :--------: |
+| 124     | ABC     | Acme & Johnson Supply Co     | IL         |
+
+Histórica_Proveedores
+
+| **SK**  |**Key**  | **Nombre**                   | **Estado** | **Fecha alta**          |
+| :-----: | :------ | :--------------------------- | :--------: | :---------------------: |
+| 123     | ABC     | Acme Supply Co               | CA         | 2003-06-14T00:00:00     |
+| 124     | ABC     | Acme & Johnson Supply Co     | IL         | 2004-12-22T00:00:00     |
+
+Este método se asemeja a cómo funcionan las tablas de auditoría de bases de datos y las técnicas de captura de datos de cambios.
+
+## SCD-5
+
+El SCD-5 se basa en la mini-dimensión SCD-4 incrustando una clave de mini-dimensión "perfil actual" en la dimensión base que se ha sobreescribe como atributo de tipo 1.  
+Este enfoque se llama tipo 5 porque 4 + 1 = 5.  
+La SCD-5 permite acceder a los valores de atributos de minidimension asignados actualmente junto con los demás de la dimensión base sin enlazarlos mediante una **_fact table_**. Normalmente representamos la dimensión base y el estabilizador del perfil de minidimension actual como una tabla única en la capa de presentación. Los atributos de los estabilizadores deberían tener nombres de columnas diferentes, como "Nivel de ingresos actual", para diferenciarlos de los atributos de la minidimensión vinculada a la **_fact table_**. El equipo de **_ETL_** debe actualizar/sobreescribir la referencia de minidimensión tipo 1 siempre que la minidimensión actual cambie con el tiempo.  
+Si el enfoque de los estabilizadores no ofrece un rendimiento de consulta satisfactorio, los atributos de la mini-dimensión podrían incrustarse físicamente (y actualizarse) a la dimensión base.
+
+# SCD-6
+
+El SCD-6 combina los enfoques de los tipos 1, 2 y 3 (1+2+3=6).  
+
+**_Reto_**: Combinar SCD-1,2 y 3 (es una SDC-6 - 6 = 1+2+3)
 
 **_Matriculación en la facultad de Astrofísica azul_**
 
@@ -466,14 +514,6 @@ Tabla de Dimensión (después de ETL)
 | 1                 | EST12345           | Daniel da Silva |                  | Astrofísica verde| 18/08/2023     | 19/08/2023   | N                   |
 | 2                 | EST12345           | Daniel da Silva | Astrofísica verde| Clima salado     | 19/08/2023     | 20/08/2023   | N                   |
 | 3                 | EST12345           | Daniel da Silva | Clima salado     | Astrofísica verde| 20/08/2023     |              | Y                   |
-
-La elección del tipo de dimensión cambiante lentamente a utilizar depende de los requisitos específicos del almacén de datos y las necesidades de análisis. Es importante considerar factores como la importancia de los datos históricos, la frecuencia de los cambios en la dimensión y las implicaciones de almacenamiento y rendimiento de cada enfoque.
-
-Las SCD son un aspecto crucial de los almacenes de datos, ya que permiten representar datos a lo largo del tiempo, lo que permite un análisis e informes históricos precisos.
-
-**_Tipo 1_**: Lentamente cambiante, un registro en una fuente de datos que en algun momento cambia y se reemplaza no guarda historicos. (reemplaza el valor inicial).  
-**_Tipo 2_**: Lentamente cambiante, un registro que guarda la historia, diciendo que en algun momento fue algo y cambio despues.  
-**_Tipo 3_**: Almacena infomracion historica pero almacenado en una columna nueva indicando el valor que tenia y en la columna nueva el nuevo valor asociado.  
 
 ## Tabla de hechos (fact)
 
@@ -704,17 +744,37 @@ Con esto hemos completado la configuración de herramientas a usar en las siguie
 > "El trabajo consiste en hacer preguntas, todas las que se puedan, y hacer frente a la falta de respuestas precisas con una cierta humildad."  
 > [Arthur Miller]
 
-**_Preguntas de Negocio_**  
+**_Preguntas de Negocio (propuestas en el curso)_**  
 - Unidades vendidas de cada producto por cliente en un tiempo determinado.
 - Cantidad de contrataciones por área en un país específico.  
 
-**_Ejemplo_**  
+**_Preguntas de Negocio (propuestas en mi proyecto - PROWPI002 -)_**  
+- **_CLV_** (Customer Lifetime Value) - **_LTV_** (Lifetime Value). Por:
+  - País.
+  - Región.
+  - Subregión.
+  - Estado/Provincia.
+  - Cliente.
+- **_RBP_** (Revenue By Product). Por:
+  - País.
+  - Región.
+  - Subregión.
+  - Estado/Provincia.
+  - Cliente.  
+
+**_Ejemplo (propuesto en el curso)_**  
 
 - **_Organización_**: Cadena de supermercados.  
 - **_Actividad objeto de análisis_**: Ventas de productos.  
 - **_Información registrada sobre una venta_**: Del producto “crema dental” se han vendido en el almacén “Almacén nro.1” el día 2/2/2030, 5 unidades por un valor de $20.  
 
-**_Ejercicio_**
+**_Ejemplo  (propuesto en mi proyecto - PROWPI002 -)_**  
+
+- **_Organización_**: Adventure Works.  
+- **_Actividad objeto de análisis_**: CLV, LTV y RBP.  
+- **_Información registrada sobre una venta_**: Del producto "X" se ha hecho una venta neta (en USD) al cliente "Y" de 5 unidades por un valor de $20 el dia "Z".  
+
+**_Ejercicio (propuesto en el curso)_**
 
 - ¿Cuánto ha sido en cantidades y valores, los descuentos y las ventas netas (venta-descuento), para cada mes y día?
 - ¿Cuánto ha crecido o disminuido las ventas netas al corte del mes de Marzo del año 2013 para cada vendedor?  
@@ -725,14 +785,28 @@ Con esto hemos completado la configuración de herramientas a usar en las siguie
 - ¿Cuál es el producto más vendido a corte del día? Por categoría.  
 - ¿Quién es el cliente que más unidades ha comprado en el último año?  
 
-**_Mi reto_**  
+**_Ejercicio (propuesto en mi proyecto - PROWPI002 -)_**
+
+- ¿Cuáles han sido en cantidades y las ventas netas (en USD), por mes y año en cada área geográfica y para cada cliente?
+- ¿Cuánto han crecido o disminuido las ventas netas (en USD), por mes y año en cada área geográfica y para cada cliente?  
+- ¿Cuál es el producto más vendido, por mes y año en cada área geográfica y para cada cliente?. Por categoría y subcategoría.  
+- ¿En qué país se ha obtenido un CLV, LTV y RBP mayor?
+- ¿Cómo sería previsible que variase el CLV, LTV y RBP (solo incrementando las cantidades vendidas)?. 
+
+**_Mi reto (propuesto en el curso)_**  
 
 - ¿Dónde geográficamente se ubican las mayores ventas netas del mes de Diciembre del año 2014?  
 - ¿Quién es el vendedor que más ventas realizó por semestre, teniendo en cuenta el nivel del cargo en el momento de la venta?  
 - ¿Dónde geográficamente, se ubican las mayores ventas netas del mes de Diciembre del año 2014?  
 - ¿Quién es el vendedor que más ventas realizó por semestre, teniendo en cuenta el nivel del cargo en el momento de la venta?  
 
-Esto lo resuelvo en el proyecto.
+**_Mi reto (propuesto en mi proyecto - PROWPI002 -)_**
+
+- ¿Cuáles son las áreas geográficas con mejores indicadores?  
+- ¿Cúales son las áreas geográficas con peores indicadores?  
+- ¿Qué posibilidades de crecimiento ofrece cada mercado?  
+
+Resuelto en en mi proyecto (PROWPI002).
 
 ## Diseño de modelo
 
@@ -744,9 +818,621 @@ Esto lo resuelvo en el proyecto.
 
 **_Ejercicio_**  
 
-
 * [platzi/curso-data-warehouse-olap · GitHub](https://github.com/platzi/curso-data-warehouse-olap/blob/main/Proyecto%20Data%20Warehouse/Dise%C3%B1o%20modelo%20dimensional%20-%20dbdiagram.sql)
 
 * [Diseño modelo dimensional - dbdiagram](https://drive.google.com/file/d/1g0kckTsNym7cQ1jPTP9VJ8FXjCt4RL49/view)  
 
-Ya lo tengo hecho de proyectos anteriores.
+**_Mi proyecto_**:  
+
+1. PROWPI001: **_ETL_** en **_Python_**.
+2. PROWPI002: **_ETL_** en **_Pentaho Data Integration_** y **_Python_**.
+3. PROWPI003: Refinamiento del **_DWH_** para adaptarlo al **_DM_** requerido en **_Power BI_** y automatización de **_Pentaho Data Integration_** y **_Python_**.
+
+**_DM existente_** (cogemos el **_DWH_** de **_PROWPI002_**):
+
+Table "target"."DimCurrencies" {
+  "CurrencyKey" varchar(3) [pk, not null]
+  "Currency" varchar(60)
+}
+
+Table "target"."DimProductCategory" {
+  "ProductCategoryKey" int4 [pk, not null]
+  "ProductCategory" varchar(50) [not null]
+}
+
+Table "target"."DimPromotion" {
+  "PromotionKey" int4 [pk, not null]
+  "Promotion" varchar(255)
+  "DiscountPct" float4
+  "PromotionType" varchar(50)
+  "PromotionCategory" varchar(50)
+  "StartDate" date [not null]
+  "EndDate" date [not null]
+  "MinQty" int4
+  "MaxQty" int4
+}
+
+Table "target"."DimRegions" {
+  "RegionCode" int4 [pk, not null]
+  "Region" varchar(20)
+}
+
+Table "target"."DimReseller" {
+  "ResellerKey" int4 [pk, not null]
+  "GeographyKey" int4
+  "Phone" varchar(25)
+  "BusinessType" varchar(20) [not null]
+  "ResellerName" varchar(50) [not null]
+  "NumberEmployees" int4
+  "OrderFrequency" varchar(1)
+  "OrderMonth" int4
+  "FirstOrderYear" int4
+  "LastOrderYear" int4
+  "ProductLine" varchar(50)
+  "AddressLine1" varchar(60)
+  "AddressLine2" varchar(60)
+  "AnnualSales" float4
+  "BankName" varchar(50)
+  "MinPaymentType" int4
+  "MinPaymentAmount" float4
+  "AnnualRevenue" float4
+  "YearOpened" int4
+}
+
+Table "target"."DimSubregions" {
+  "SubregionCode" int4 [pk, not null]
+  "Subregion" varchar(60)
+}
+
+Table "target"."FactResellerSales" {
+  "ProductKey" int4 [not null]
+  "ResellerKey" int4 [not null]
+  "EmployeeKey" int4 [not null]
+  "PromotionKey" int4 [not null]
+  "CurrencyKey" varchar(3) [not null]
+  "SalesTerritoryKey" int4 [not null]
+  "SalesOrderNumber" varchar(20) [not null]
+  "SalesOrderLineNumber" int4 [not null]
+  "RevisionNumber" int4 [not null]
+  "OrderQuantity" int4 [not null]
+  "UnitPrice" float4 [not null]
+  "ExtendedAmount" float4 [not null]
+  "UnitPriceDiscountPct" float4 [not null]
+  "DiscountAmount" float4 [not null]
+  "ProductStandardCost" float4 [not null]
+  "TotalProductCost" float4 [not null]
+  "SalesAmount" float4 [not null]
+  "TaxAmt" float4 [not null]
+  "Freight" float4 [not null]
+  "CarrierTrackingNumber" varchar(25)
+  "CustomerPONumber" varchar(25)
+  "OrderDate" date
+  "DueDate" date
+  "ShipDate" date
+  "FactResellerSalesPK" varchar(30) [pk, not null]
+}
+
+Table "target"."Metadata" {
+  "Key" varchar(4) [pk, not null]
+  "Meaning" varchar(250) [not null]
+  "Standard" varchar(50)
+  "Formula" varchar(500)
+  "Units" varchar(10)
+}
+
+Table "target"."DimCountries" {
+  "CountryCode" varchar(3) [pk, not null]
+  "Country" varchar(60)
+  "Capital" varchar(60)
+  "RegionCode" int4
+  "SubregionCode" int4
+  "CurrencyKey01" varchar(3)
+  "CurrencyKey02" varchar(3)
+  "Area" int4
+
+Indexes {
+  CurrencyKey01 [type: btree, name: "fki_DimCurrencies01FK"]
+  CurrencyKey02 [type: btree, name: "fki_DimCurrencies02FK"]
+  RegionCode [type: btree, name: "fki_DimRegionsFK"]
+  SubregionCode [type: btree, name: "fki_DimSubregionsFK"]
+}
+}
+
+Table "target"."DimProductSubcategory" {
+  "ProductSubcategoryKey" int4 [pk, not null]
+  "ProductSubcategory" varchar(50) [not null]
+  "ProductCategoryKey" int4
+
+Indexes {
+  ProductCategoryKey [type: btree, name: "fki_DimProductCategoryFK"]
+}
+}
+
+Table "target"."DimSalesTerritory" {
+  "SalesTerritoryKey" int4 [pk, not null]
+  "SalesTerritoryRegion" varchar(60)
+  "SalesTerritoryGroup" varchar(60)
+  "CountryCode" varchar(3) [not null]
+}
+
+Table "target"."DimStatesProvinces" {
+  "StateProvinceCode" varchar(3) [pk, not null]
+  "CountryCode" varchar(3) [not null]
+  "StateProvince" varchar(60)
+}
+
+Table "target"."FactCountries" {
+  "CountryCode" varchar(3) [pk, not null]
+  "Population" int4
+  "PDR" int4
+  "PGR" float4
+  "CO2PC" float4
+  "MFPC" float4
+  "GDPG" float4
+  "GNIPC" float4
+  "FGNIPC" float4
+  "MGNIPC" float4
+  "FLFPR" float4
+  "MLFPR" float4
+  "PDGDP" float4
+  "EYS" float4
+  "FEYS" float4
+  "MEYS" float4
+  "FSSE" float4
+  "MSSE" float4
+  "CHEGDP" float4
+  "CHEPCUSD" float4
+  "LE" float4
+  "FLE" float4
+  "MLE" float4
+  "MMR" int4
+  "TBR" float4
+}
+
+Table "target"."FactExchanges" {
+  "Date" date [not null]
+  "CurrencyKey" varchar(3) [not null]
+  "Exchange" float4
+
+Indexes {
+  (Date, CurrencyKey) [pk]
+  CurrencyKey [type: btree, name: "fki_FK_DimCurrencies"]
+}
+}
+
+Table "target"."DimEmployee" {
+  "EmployeeKey" int4 [pk, not null]
+  "ParentEmployeeKey" int4
+  "EmployeeNationalIDAlternateKey" varchar(15)
+  "ParentEmployeeNationalIDAlternateKey" varchar(15)
+  "SalesTerritoryKey" int4
+  "FirstName" varchar(50) [not null]
+  "LastName" varchar(50) [not null]
+  "MiddleName" varchar(50)
+  "NameStyle" bool [not null]
+  "Title" varchar(50)
+  "HireDate" date
+  "BirthDate" date
+  "LoginID" varchar(256)
+  "EmailAddress" varchar(50)
+  "Phone" varchar(25)
+  "MaritalStatus" varchar(1)
+  "EmergencyContactName" varchar(50)
+  "EmergencyContactPhone" varchar(25)
+  "SalariedFlag" bool
+  "Gender" varchar(1)
+  "PayFrequency" int4
+  "BaseRate" float4
+  "VacationHours" int4
+  "SickLeaveHours" int4
+  "CurrentFlag" bool
+  "SalesPersonFlag" bool
+  "DepartmentName" varchar(50)
+  "StartDate" date
+  "EndDate" date
+  "Status" varchar(50)
+
+Indexes {
+  ParentEmployeeKey [type: btree, name: "fki_DimEmployeeFK"]
+}
+}
+
+Table "target"."DimGeography" {
+  "GeographyKey" int4 [pk, not null]
+  "CountryCode" varchar(3) [not null]
+  "StateProvinceCode" varchar(3)
+  "SalesTerritoryKey" int4
+  "City" varchar(60)
+  "PostalCode" varchar(10)
+
+Indexes {
+  CountryCode [type: btree, name: "fki_DimCountriesFK"]
+  StateProvinceCode [type: btree, name: "fki_DimStatesProvincesFK"]
+}
+}
+
+Table "target"."DimProduct" {
+  "ProductKey" int4 [pk, not null]
+  "ProductAlternateKey" varchar(25) [not null]
+  "ProductName" varchar(50) [not null]
+  "Description" varchar(400)
+  "ProductSubcategoryKey" int4
+  "WeightUnitMeasureCode" varchar(3)
+  "SizeUnitMeasureCode" varchar(3)
+  "StandardCost" float4
+  "FinishedGoodsFlag" bool [not null]
+  "Color" varchar(15)
+  "SafetyStockLevel" int4
+  "ReorderPoint" int4
+  "ListPrice" float4
+  "Size" varchar(50)
+  "SizeRange" varchar(50)
+  "Weight" float4
+  "DaysToManufacture" int4
+  "ProductLine" varchar(2)
+  "DealerPrice" float4
+  "Class" varchar(2)
+  "Style" varchar(2)
+  "ModelName" varchar(50)
+  "StartDate" date
+  "EndDate" date
+  "Status" varchar(7)
+
+Indexes {
+  ProductSubcategoryKey [type: btree, name: "fki_DimProductSubcategoryFK"]
+}
+}
+
+Table "target"."FactProductInventory" {
+  "ProductKey" int4 [not null]
+  "MovementDate" date [not null]
+  "UnitCost" float4 [not null]
+  "UnitsIn" int4 [not null]
+  "UnitsOut" int4 [not null]
+  "UnitsBalance" int4 [not null]
+  "FactProductInventoryPK" varchar(20) [pk, not null]
+}
+
+Table "target"."DimCustomer" {
+  "CustomerKey" int4 [pk, not null]
+  "GeographyKey" int4
+  "CustomerAlternateKey" varchar(15)
+  "Title" varchar(50)
+  "FirstName" varchar(50)
+  "MiddleName" varchar(50)
+  "LastName" varchar(50)
+  "BirthDate" date
+  "MaritalStatus" varchar(1)
+  "Suffix" varchar(10)
+  "Gender" varchar(1)
+  "EmailAddress" varchar(50)
+  "YearlyIncome" float4
+  "TotalChildren" int4
+  "NumberChildrenAtHome" int4
+  "Education" varchar(40)
+  "HouseOwnerFlag" varchar(1)
+  "NumberCarsOwned" int4
+  "AddressLine1" varchar(120)
+  "AddressLine2" varchar(120)
+  "Phone" varchar(20)
+  "DateFirstPurchase" date
+  "CommuteDistance" varchar(15)
+  "Occupation" varchar(100)
+  "NameStyle" bool
+
+Indexes {
+  GeographyKey [type: btree, name: "fki_DimGeographyFK"]
+}
+}
+
+Table "target"."FactInternetSales" {
+  "ProductKey" int4 [not null]
+  "CustomerKey" int4 [not null]
+  "PromotionKey" int4 [not null]
+  "CurrencyKey" varchar(3) [not null]
+  "SalesTerritoryKey" int4 [not null]
+  "SalesOrderNumber" varchar(20) [not null]
+  "SalesOrderLineNumber" int4 [not null]
+  "RevisionNumber" int4 [not null]
+  "OrderQuantity" int4 [not null]
+  "UnitPrice" float4 [not null]
+  "ExtendedAmount" float4 [not null]
+  "UnitPriceDiscountPct" float4 [not null]
+  "DiscountAmount" float4 [not null]
+  "ProductStandardCost" float4 [not null]
+  "TotalProductCost" float4 [not null]
+  "SalesAmount" float4 [not null]
+  "TaxAmt" float4 [not null]
+  "Freight" float4 [not null]
+  "CarrierTrackingNumber" varchar(25)
+  "CustomerPONumber" varchar(25)
+  "OrderDate" date
+  "DueDate" date
+  "ShipDate" date
+  "FactInternetSalesPK" varchar(30) [pk, not null]
+
+Indexes {
+  CurrencyKey [type: btree, name: "fki_CurrenciesFK"]
+  CurrencyKey [type: btree, name: "fki_DimCurrenciesFK"]
+  CustomerKey [type: btree, name: "fki_DimCustomerFK"]
+  ProductKey [type: btree, name: "fki_DimProductFK"]
+  PromotionKey [type: btree, name: "fki_DimPromotionFK"]
+  SalesTerritoryKey [type: btree, name: "fki_DimSalesTerritoryFK"]
+}
+}
+
+Table "target"."FactInternetSalesForecast" {
+  "ProductKey" int4 [not null]
+  "CustomerKey" int4 [not null]
+  "PromotionKey" int4 [not null]
+  "CurrencyKey" varchar(3) [not null]
+  "SalesTerritoryKey" int4 [not null]
+  "SalesOrderNumber" varchar(20) [not null]
+  "SalesOrderLineNumber" int4 [not null]
+  "RevisionNumber" int4 [not null]
+  "OrderQuantity" int4 [not null]
+  "UnitPrice" float4 [not null]
+  "ExtendedAmount" float4 [not null]
+  "UnitPriceDiscountPct" float4 [not null]
+  "DiscountAmount" float4 [not null]
+  "ProductStandardCost" float4 [not null]
+  "TotalProductCost" float4 [not null]
+  "SalesAmount" float4 [not null]
+  "TaxAmt" float4 [not null]
+  "Freight" float4 [not null]
+  "CarrierTrackingNumber" varchar(25)
+  "CustomerPONumber" varchar(25)
+  "OrderDate" date
+  "DueDate" date
+  "ShipDate" date
+  "FactInternetSalesForecastPK" varchar(30) [pk, not null]
+
+Indexes {
+  CurrencyKey [type: btree, name: "fki_CurrenciesForecastFK"]
+  CurrencyKey [type: btree, name: "fki_DimCurrenciesForecastFK"]
+  CustomerKey [type: btree, name: "fki_DimCustomerForecastFK"]
+  ProductKey [type: btree, name: "fki_DimProductForecastFK"]
+  PromotionKey [type: btree, name: "fki_DimPromotionFForecastK"]
+  SalesTerritoryKey [type: btree, name: "fki_DimSalesTerritoryForecastFK"]
+}
+}
+
+Table "target"."FactInternetSalesReason" {
+  "SalesOrderNumber" varchar(20) [not null]
+  "SalesOrderLineNumber" int4 [not null]
+  "SalesReasonKey" int4 [not null]
+  "FactInternetSalesReasonPK" varchar(30) [pk, not null]
+  "FactInternetSalesReason_004" varchar(30) [not null]
+
+Indexes {
+  FactInternetSalesReason_004 [type: btree, name: "fki_FactInternetSalesReason_004FK"]
+}
+}
+
+Ref "DimRegionsFK":"target"."DimRegions"."RegionCode" < "target"."DimCountries"."RegionCode" [update: cascade, delete: cascade]
+
+Ref "DimSubregionsFK":"target"."DimSubregions"."SubregionCode" < "target"."DimCountries"."SubregionCode" [update: cascade, delete: cascade]
+
+Ref "DimCurrencies01FK":"target"."DimCurrencies"."CurrencyKey" < "target"."DimCountries"."CurrencyKey01" [update: cascade, delete: cascade]
+
+Ref "DimCurrencies02FK":"target"."DimCurrencies"."CurrencyKey" < "target"."DimCountries"."CurrencyKey02" [update: cascade, delete: cascade]
+
+Ref "DimProductCategoryFK":"target"."DimProductCategory"."ProductCategoryKey" < "target"."DimProductSubcategory"."ProductCategoryKey" [update: cascade, delete: cascade]
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."DimSalesTerritory"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."DimStatesProvinces"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."FactCountries"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "FK_DimCurrencies":"target"."DimCurrencies"."CurrencyKey" < "target"."FactExchanges"."CurrencyKey" [update: cascade, delete: cascade]
+
+Ref "DimEmployeeFK":"target"."DimEmployee"."EmployeeKey" < "target"."DimEmployee"."ParentEmployeeKey" [update: cascade, delete: cascade]
+
+Ref "DimSalesTerritoryFK":"target"."DimSalesTerritory"."SalesTerritoryKey" < "target"."DimEmployee"."SalesTerritoryKey" [update: cascade, delete: cascade]
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."DimGeography"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "DimStatesProvincesFK":"target"."DimStatesProvinces"."StateProvinceCode" < "target"."DimGeography"."StateProvinceCode" [update: cascade, delete: cascade]
+
+Ref "DimSalesTerritoryFK":"target"."DimSalesTerritory"."SalesTerritoryKey" < "target"."DimGeography"."SalesTerritoryKey" [update: cascade, delete: cascade]
+
+Ref "DimProductSubcategoryFK":"target"."DimProductSubcategory"."ProductSubcategoryKey" < "target"."DimProduct"."ProductSubcategoryKey" [update: cascade, delete: cascade]
+
+Ref "DimProductFK":"target"."DimProduct"."ProductKey" < "target"."FactProductInventory"."ProductKey" [update: cascade, delete: cascade]
+
+Ref "DimGeographyFK":"target"."DimGeography"."GeographyKey" < "target"."DimCustomer"."GeographyKey" [update: cascade, delete: cascade]
+
+Ref "DimProductFK":"target"."DimProduct"."ProductKey" < "target"."FactInternetSales"."ProductKey" [update: cascade, delete: cascade]
+
+Ref "DimCustomerFK":"target"."DimCustomer"."CustomerKey" < "target"."FactInternetSales"."CustomerKey" [update: cascade, delete: cascade]
+
+Ref "DimPromotionFK":"target"."DimPromotion"."PromotionKey" < "target"."FactInternetSales"."PromotionKey" [update: cascade, delete: cascade]
+
+Ref "DimCurrenciesFK":"target"."DimCurrencies"."CurrencyKey" < "target"."FactInternetSales"."CurrencyKey" [update: cascade, delete: cascade]
+
+Ref "DimSalesTerritoryFK":"target"."DimSalesTerritory"."SalesTerritoryKey" < "target"."FactInternetSales"."SalesTerritoryKey" [update: cascade, delete: cascade]
+
+Ref "DimProductForecastFK":"target"."DimProduct"."ProductKey" < "target"."FactInternetSalesForecast"."ProductKey" [update: cascade, delete: cascade]
+
+Ref "DimCustomerForecastFK":"target"."DimCustomer"."CustomerKey" < "target"."FactInternetSalesForecast"."CustomerKey" [update: cascade, delete: cascade]
+
+Ref "DimPromotionForecastFK":"target"."DimPromotion"."PromotionKey" < "target"."FactInternetSalesForecast"."PromotionKey" [update: cascade, delete: cascade]
+
+Ref "DimCurrenciesFK":"target"."DimCurrencies"."CurrencyKey" < "target"."FactInternetSalesForecast"."CurrencyKey" [update: cascade, delete: cascade]
+
+Ref "DimSalesTerritoryForecastFK":"target"."DimSalesTerritory"."SalesTerritoryKey" < "target"."FactInternetSalesForecast"."SalesTerritoryKey" [update: cascade, delete: cascade]
+
+Ref "FactInternetSalesReason_004FK":"target"."FactInternetSales"."FactInternetSalesPK" < "target"."FactInternetSalesReason"."FactInternetSalesReason_004" [update: cascade, delete: cascade]
+
+
+**_DM requerido_** (cogemos el **_DM en Power BI_** de **_PROWPI002 y lo llevamos a dbdiagram.io_**):
+
+// table 1
+Table "target"."DimCurrenciesExchanges" {
+  "CurrencyKey" varchar(3)
+  "Currency" varchar(60)
+  "Date" date
+  "Exchange" float4
+}
+
+// table 2
+Table "target"."DimCountries" {
+  "CountryCode" varchar(3) [pk, not null]
+  "Country" varchar(60)
+  "Capital" varchar(60)
+  "RegionCode" int4
+  "SubregionCode" int4
+  "CurrencyKey01" varchar(3)
+  "CurrencyKey02" varchar(3)
+  "Area" int4
+}
+
+// table 3
+Table "target"."DimGeography" {
+  "GeographyKey" int4 [pk, not null]
+  "CountryCode" varchar(3) [not null]
+  "StateProvinceCode" varchar(3)
+  "SalesTerritoryKey" int4
+  "City" varchar(60)
+  "PostalCode" varchar(10)
+}
+
+// table 4
+Table "target"."DimProductCategory" {
+  "ProductCategoryKey" int4 [pk, not null]
+  "ProductCategory" varchar(50) [not null]
+}
+
+// table 5
+Table "target"."DimProductSubcategory" {
+  "ProductSubcategoryKey" int4 [pk, not null]
+  "ProductSubcategory" varchar(50) [not null]
+  "ProductCategoryKey" int4
+}
+
+// table 6
+Table "target"."DimRegions" {
+  "RegionCode" int4 [pk, not null]
+  "Region" varchar(20)
+}
+
+// table 7
+Table "target"."DimStatesProvinces" {
+  "StateProvinceCode" varchar(3) [pk, not null]
+  "CountryCode" varchar(3) [not null]
+  "StateProvince" varchar(60)
+}
+
+// table 8
+Table "target"."DimSubregions" {
+  "SubregionCode" int4 [pk, not null]
+  "Subregion" varchar(60)
+}
+
+// table 9
+Table "target"."FactCountries" {
+  "CountryCode" varchar(3) [pk, not null]
+  "Population" int4
+  "PDR" int4
+  "PGR" float4
+  "CO2PC" float4
+  "MFPC" float4
+  "GDPG" float4
+  "GNIPC" float4
+  "FGNIPC" float4
+  "MGNIPC" float4
+  "FLFPR" float4
+  "MLFPR" float4
+  "PDGDP" float4
+  "EYS" float4
+  "FEYS" float4
+  "MEYS" float4
+  "FSSE" float4
+  "MSSE" float4
+  "CHEGDP" float4
+  "CHEPCUSD" float4
+  "LE" float4
+  "FLE" float4
+  "MLE" float4
+  "MMR" int4
+  "TBR" float4
+}
+
+// table 10
+Table "target"."FactISSCustomerProduct" {
+  "CustomerKey" int4 [pk, not null]
+  "Title" varchar(50)
+  "FirstName" varchar(50) [not null]
+  "MiddleName" varchar(50)
+  "LastName" varchar(50) [not null]
+  "Age" int4
+  "OrderDate" date
+  "ExtendedAmount" float4
+  "Extended amount USD" float4
+  "Net income USD" float4
+  "ProductKey" int4 [not null]
+  "ProductName" varchar(50) [not null]
+  "OrderQuantity" int4  
+  "CurrencyKey" varchar(3)
+  "ProductSubcategoryKey" int4
+  "GeographyKey" int4
+}
+
+// table 11
+Table "target"."DimMonthsPerCustomer" {
+  "CustomerKey" int4 [not null]
+  "Months No" int4
+  "MinOrderDate" date
+  "MaxOrderDate" date
+}
+
+// table 12
+Table "target"."Metadata" {
+  "Key" varchar(4) [pk, not null]
+  "Meaning" varchar(250) [not null]
+  "Standard" varchar(50)
+  "Formula" varchar(500)
+  "Units" varchar(10)
+}
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."DimGeography"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "DimStatesProvincesFK":"target"."DimStatesProvinces"."StateProvinceCode" < "target"."DimGeography"."StateProvinceCode" [update: cascade, delete: cascade]
+
+Ref "DimProductCategoryFK":"target"."DimProductCategory"."ProductCategoryKey" < "target"."DimProductSubcategory"."ProductCategoryKey" [update: cascade, delete: cascade]
+
+Ref "DimRegionsFK":"target"."DimRegions"."RegionCode" < "target"."DimCountries"."RegionCode" [update: cascade, delete: cascade]
+
+Ref "DimSubregionsFK":"target"."DimSubregions"."SubregionCode" < "target"."DimCountries"."SubregionCode" [update: cascade, delete: cascade]
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."FactCountries"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "DimCountriesFK":"target"."DimCountries"."CountryCode" < "target"."DimStatesProvinces"."CountryCode" [update: cascade, delete: cascade]
+
+Ref "DimCurrenciesExchanges01FK":"target"."DimCurrenciesExchanges"."CurrencyKey" < "target"."DimCountries"."CurrencyKey01" [update: cascade, delete: cascade]
+
+Ref "DimCurrenciesExchanges02FK":"target"."DimCurrenciesExchanges"."CurrencyKey" < "target"."DimCountries"."CurrencyKey02" [update: cascade, delete: cascade]
+
+Ref "DimProductSubcategoryFK":"target"."DimProductSubcategory"."ProductSubcategoryKey" < "target"."FactISSCustomerProduct"."ProductSubcategoryKey" [update: cascade, delete: cascade]
+
+Ref "DimGeographyFK":"target"."DimGeography"."GeographyKey" < "target"."FactISSCustomerProduct"."GeographyKey" [update: cascade, delete: cascade]
+
+Ref "DimCurrenciesExchangesFK":"target"."DimCurrenciesExchanges"."CurrencyKey" < "target"."FactISSCustomerProduct"."CurrencyKey" [update: cascade, delete: cascade]
+
+Ref "DimCustomerFK":"target"."DimMonthsPerCustomer"."CustomerKey" < "target"."FactISSCustomerProduct"."CustomerKey" [update: cascade, delete: cascade]
+
+**_Conclusiones_**:
+
+- La tabla **_ISS\_Customer\_Product\_view_**, que es una vista en **_PROWPI002_**, debe convertirse en **_FactISSCustomerProduct_** en **_PROWPI003_**. Esta es la **_fact table_** fundamental de nuestro modelo y no se relaciona directamente con la otra **_fact table FactCountries_**.
+- Las tablas **_DimCountries_** y **_FactCountries_** son el resultado de **_PROWPI001_**, el cual hicimos en **_Python_**, pero que rehicimos en **_PDI_** en **_PROWPI002_**. Estas tablas dan el contexto necesario para dimensionar nuevos mercados y posibilidades de expansión.
+- La tabla **_Months per customer_**, que se calcula en **_Power BI_**, en **_PROWPI002_**, debe convertirse en **_DimMonthsPerCustomer_** en **_PROWPI003_** y existir físicamente en el **_DWH_**.
+- La tabla **_Currencies\_Exchanges\_view_** debe convertirse en **_DimCurrenciesExchanges_** en **_PROWPI003_** y existir físicamente en el **_DWH_**. En principio, la tabla **_Excel_** era una **_SCD-2_**, pero para poder tratar con una granularidad diária la transformamos en una **_SCD-1_** (mediante transformación en **_Python_**).
+- Las **_SK (Surrogate Keys)_** que despreciamos en el **_ETL_** de **_PROWPI002_**, debemos volver a recuperarlas si implican una mejora.
+- El **_DM_** tipo **_Snowflake schema_** resultante debería ser de óptimo (que ya lo era) en su rendimiento y perfectamente documentado.
+- Hemos eliminado campos innecesarios, porque al validar el **_BSC_** con el cliente tenemos la idea exacta de lo que queremos. 
+- Nuestro modelo ahora se renombrará como **_PROWPI003_**.
+- Físicamente habrá difrentes BD atendiendo a la fase de ETL:
+- **_PROWPI002_**: era el **_DWH_** en el sistema anterior, que pasa a ser el **_Staging Area_** en el nuevo sistema. Dentro de la BD montaremos un solo **_Schema_** sin diferenciar **_DM_** todavía.
+- **_PROWPI003_** (**_DWH_** nuevo), que se alimentará del producto del nuevo **_ETL_**, a partir de las tablas del **_Staging Area_**. Dentro de la BD montaremos **_Schemas_** que se corresponderán a los diferentes **_DM_**.
+- La documentación y pruebas de este curso será la que entregaríamos al cliente junto al **_DWH_**, al **_BSC_** y la documentación y resultados de **_PROWPI002_**.

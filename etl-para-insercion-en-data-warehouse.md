@@ -237,3 +237,190 @@ print(output_data)
 
 [ChatGPT usage](CHATGPT_USAGE.md) 
 
+## Modelo físico
+
+**_Modelo físico propuesto en el curso_**
+
+--drop table dim_clientes;
+create table dim_clientes
+(
+	id_cliente	integer
+	,codigo_cliente	varchar(20)
+	,nombre	varchar(50)
+	,apellido	varchar(50)
+	,nombre_completo	varchar(100)
+	,numero_telefono_celular	varchar(20)
+	,numero_telefono_casa	varchar(20)
+	,numero_telefono_trabajo	varchar(20)
+	,ciudad_casa	varchar(50)
+	,fecha_carga timestamp
+	,fecha_actualizacion timestamp
+	,primary key (id_cliente)
+) 
+;
+
+
+--drop table dim_productos;
+create table dim_productos
+(
+	id_producto	integer
+	,codigo_producto	varchar(20)
+	,nombre	varchar(50)
+	,color	varchar(50)
+	,tamanio	varchar(50)
+	,categoria	varchar(50)
+	,fecha_carga timestamp
+	,fecha_actualizacion timestamp
+	,primary key (id_producto)
+) 
+;
+
+
+--drop table dim_territorios;
+create table dim_territorios
+(
+	id_territorio	integer
+	,codigo_territorio	varchar(20)
+	,nombre	varchar(50)
+	,continente	varchar(50)
+	,fecha_carga timestamp
+	,fecha_actualizacion timestamp
+	,primary key (id_territorio)
+) 
+;
+
+
+--drop table dim_vendedores;
+create table dim_vendedores
+(
+	id_vendedor	integer
+	,codigo_vendedor	varchar(20)
+	,identificación	varchar(20)
+	,nombre	varchar(50)
+	,apellido	varchar(50)
+	,nombre_completo	varchar(50)
+	,rol	varchar(50)
+	,fecha_nacimiento	date
+	,genero	varchar(10)
+	,ind_activo	boolean
+	,fecha_inicio	date
+	,fecha_fin	date
+	,version integer
+	,fecha_carga timestamp
+	,primary key (id_vendedor)
+) 
+;
+
+
+--drop table fact_ventas;
+CREATE TABLE dwh_adventureworks.fact_ventas (
+	id_venta integer NOT NULL,
+	codigo_venta_detalle varchar(10) NOT NULL,
+	codigo_venta_encabezado varchar(10) NOT NULL,
+	id_fecha integer NULL,
+	id_territorio integer NULL,
+	id_cliente integer NULL,
+	id_vendedor integer NULL,
+	id_producto integer NULL,
+	cantidad integer NULL,
+	valor numeric(18,2) NULL,
+	descuento numeric(18,2) NULL,
+	fecha_carga timestamp NULL,
+	fecha_actualizacion timestamp NULL,
+	CONSTRAINT fact_ventas_pkey PRIMARY KEY (id_venta)
+)
+
+
+--drop table dim_tiempo;
+create table dim_tiempo
+(
+    id_fecha int not null,
+    fecha date not null, 
+    dia smallint not null,
+    mes smallint not null,
+    anio smallint not null,
+    dia_semana smallint not null,
+    dia_anio smallint not null,
+	PRIMARY KEY (id_fecha)
+)
+
+
+
+--Ejecutar luego de realizar la primera carga de datos en las dimensiones con Pentaho!!!!
+
+INSERT INTO dwh_adventureworks.dim_clientes
+(id_cliente, codigo_cliente, nombre, apellido, nombre_completo, numero_telefono_celular, numero_telefono_casa, numero_telefono_trabajo, ciudad_casa, fecha_carga, fecha_actualizacion)
+VALUES(-1, '-1', 'Sin Información', 'Sin Información', 'Sin Información', '', '', '', '', '1900/01/01 00:00:00', '1900/01/01 00:00:00');
+
+
+INSERT INTO dwh_adventureworks.dim_productos
+(id_producto, codigo_producto, nombre, color, tamanio, categoria, fecha_carga, fecha_actualizacion)
+VALUES(-1, '-1', 'Sin Información', '', '', '', '1900/01/01 00:00:00', '1900/01/01 00:00:00');
+
+
+INSERT INTO dwh_adventureworks.dim_territorios
+(id_territorio, codigo_territorio, nombre, continente, fecha_carga, fecha_actualizacion)
+VALUES(-1, '-1', 'Sin Información', '', '1900/01/01 00:00:00', '1900/01/01 00:00:00');
+
+
+INSERT INTO dwh_adventureworks.dim_vendedores
+(id_vendedor, codigo_vendedor, identificación, nombre, apellido, nombre_completo, rol, fecha_nacimiento, genero, ind_activo, fecha_inicio, fecha_fin, version, fecha_carga)
+VALUES(-1, '-1', null, 'Sin Información', 'Sin Información', 'Sin Información', null, '1900/01/01 00:00:00', null, true, '1900/01/01 00:00:00', '9999/12/31 00:00:00', 1, '1900/01/01 00:00:00');
+
+## Extracción: querys en SQL
+
+**_Extracción propuesta en el curso_**
+
+--Extraer del transaccional
+
+select 
+	c.customerid as cod_cliente
+	, p.firstname as nombre
+	, p.lastname as apellido
+	, p.firstname||' '||p.lastname as nombre_completo
+	, case when p2.phonenumbertypeid = 1 then p2.phonenumber else null end as numero_celular
+	, case when p2.phonenumbertypeid = 2 then p2.phonenumber else null end as numero_casa
+	, case when p2.phonenumbertypeid = 3 then p2.phonenumber else null end as numero_trabajo
+	, a.city as ciudad
+from sales.customer c
+left join person.person p
+	on(c.personid=p.businessentityid)
+left join person.personphone p2 
+	on(p.businessentityid = p2.businessentityid)
+left join person.businessentity b
+	on(p.businessentityid = b.businessentityid)
+left join person.businessentityaddress b2 
+	on(b.businessentityid = b2.businessentityid and b2.addresstypeid = 2)
+left join person.address a 
+	on (b2.addressid = a.addressid)
+	
+
+	
+--Extraer del dwh
+SELECT
+	  id_cliente
+	, codigo_cliente
+	, fecha_actualizacion
+FROM dwh_adventureworks.dim_clientes
+
+## Extracción en Pentaho
+
+![Query de la tabla transaccional](https://i.imgur.com/71FIUHF.png)  
+_Query de la tabla transaccional_
+
+<p><br></p> 
+
+![Conexión a la tabla del DWH](https://i.imgur.com/EXmkxbF.png)  
+_Conexión a la tabla del DWH_
+
+<p><br></p> 
+
+![Query de la tabla del DWH](https://i.imgur.com/vUnyQVl.png)  
+_Query de la tabla del DWH_
+
+De momento la tabla del DWH está vacía.
+
+<p><br></p> 
+
+![Comparación de los registros de las dos tablas](https://i.imgur.com/xuNnGlt.png)  
+_Comparación de los registros de las dos tablas_

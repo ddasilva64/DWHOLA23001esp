@@ -15,3 +15,7 @@
 * [Modelo Fisico dwh_adventureworks.sql](https://github.com/platzi/curso-data-warehouse-olap/blob/main/Proyecto%20Data%20Warehouse/Modelo%20Fisico%20dwh_adventureworks.sql)
 * [extracción clientes.sql](https://github.com/platzi/curso-data-warehouse-olap/blob/main/Proyecto%20Data%20Warehouse/extracci%C3%B3n%20clientes.sql)
 
+* [Transformaciones](https://github.com/platzi/curso-data-warehouse-olap/tree/main/Proyecto%20Data%20Warehouse/Transformaciones)
+
+
+

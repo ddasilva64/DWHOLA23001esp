@@ -424,3 +424,63 @@ De momento la tabla del DWH está vacía.
 
 ![Comparación de los registros de las dos tablas](https://i.imgur.com/xuNnGlt.png)  
 _Comparación de los registros de las dos tablas_
+
+## Transformación: dimensión de cliente
+
+![Captura de la fecha de carga - del sistema -](https://i.imgur.com/pmUHWt6.png)  
+_Captura de la fecha de carga - del sistema -_
+
+![Indicador para saber si es Insert o Update](https://i.imgur.com/IpGxpqh.png)  
+_Indicador para saber si es Insert o Update_
+
+![Asignamos el ID del cliente](https://i.imgur.com/cjGse3w.png)  
+_Asignamos el ID del cliente_
+
+![Comprobamos si ID cliente es nuevo](https://i.imgur.com/mExtfPD.png)  
+_Comprobamos si ID cliente es nuevo_
+
+![Creamos una constante para ID cliente existentes](https://i.imgur.com/uIlSPrp.png)
+_Creamos una constante para ID cliente existentes_
+
+![A la variable le asignamos el ID del cliente](https://i.imgur.com/JZNwJV8.png)
+_A la variable le asignamos el ID del cliente_
+
+![Creamos una clave autoincrementada para los nuevos registros](https://i.imgur.com/EvdEfiL.png)  
+_Creamos una clave autoincrementada para los nuevos registros_
+
+![Unimos los dos pasos](https://i.imgur.com/PcepmGO.png)  
+_Unimos los dos pasos_
+
+![Fórmula final para asignar el ID de cliente](https://i.imgur.com/ZTAo6Eh.png)  
+_Fórmula final para asignar el ID de cliente_
+
+Clic con el botón derecho del ratón en la fórmula, entonces preview 
+
+![Clic con el botón derecho del ratón en la fórmula, entonces preview ](https://i.imgur.com/uN8OZhZ.png)  
+_Clic con el botón derecho del ratón en la fórmula, entonces preview_
+
+![Configure, variables y podemos establecer el valor mínimo de la variable que incrementaremos](https://i.imgur.com/ILqe0ZF.png)  
+_Configure, variables y podemos establecer el valor mínimo de la variable que incrementaremos_
+
+![Corregimos asignación de variables mal hecha](https://i.imgur.com/39HVmyJ.png)  
+_Corregimos asignación de variables mal hecha_
+
+![Ejecución correcta del flujo del ETL](https://i.imgur.com/nCdpUYU.png)  
+_Ejecución correcta del flujo del ETL_
+
+## Carga: dimensión de cliente
+
+![Update de clientes existentes](https://i.imgur.com/J7FK8m6.png)  
+_Update de clientes existentes_
+
+![En la solución propuesta, los registros para el Insert se dejan en un bucket de S3](https://i.imgur.com/yZWi05Y.png)  
+_En la solución propuesta, los registros para el Insert se dejan en un bucket de S3_
+
+![Solución](https://i.imgur.com/Sgssh8c.png)  
+_Solución_
+
+![Copiamos el archivo plano del bucket a la tabla de S3, para hacer el Insert](https://i.imgur.com/E9aQVnq.png)  
+_Copiamos el archivo plano del bucket a la tabla de S3, para hacer el Insert_
+
+## Soluciones ETL de las tablas de dimensiones y hechos
+

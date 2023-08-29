@@ -484,3 +484,62 @@ _Copiamos el archivo plano del bucket a la tabla de S3, para hacer el Insert_
 
 ## Soluciones ETL de las tablas de dimensiones y hechos
 
+![Actualización directa en la tabla de Territorios - son pocos registros -](https://i.imgur.com/E5nFuRV.png)  
+_Actualización directa en la tabla de Territorios - son pocos registros -_
+
+![Actualización directa en la tabla de Productos - también son pocos registros -](https://i.imgur.com/dl1PNnu.png)  
+_Actualización directa en la tabla de Productos - también son pocos registros -_
+
+![Actualización directa en la tabla de Vendedores](https://i.imgur.com/cpwTRrL.png)  
+_Actualización directa en la tabla de Vendedores_
+
+![Actualización directa en la tabla de Tiempo - generación de fechas -](https://i.imgur.com/ZrBm4Ba.png)  
+_Actualización directa en la tabla de Tiempo - generación de fechas -_
+
+![Actualización directa en la tabla de Tiempo - generación de secuencia -](https://i.imgur.com/tqcsWf2.png)  
+_Actualización directa en la tabla de Tiempo - generación de secuencia -_
+
+![Actualización directa en la tabla de Tiempo - cálculos de fechas -](https://i.imgur.com/OMeeSOE.png)  
+_Actualización directa en la tabla de Tiempo - cálculos de fechas -_
+
+![Actualización directa en la tabla de hechos - Vendedores -](https://i.imgur.com/ILNTHh6.png)  
+_Actualización directa en la tabla de hechos - Vendedores -_
+
+![Actualización directa en la tabla de hechos - vendedor i rol de vendedor activo por fecha -](https://i.imgur.com/qzm9XEI.png)  
+_Actualización directa en la tabla de hechos - vendedor i rol de vendedor activo por fecha -_
+
+## Parámetros en ETL
+
+![Creación de un nuevo job para lanzar las transformaciones](https://i.imgur.com/A9bElD1.png)  
+_Creación de un nuevo job para lanzar las transformaciones_
+
+![Hacemos una nueva transformación para obtener el max. del autoincremental de la tabla que venga como parámetro](https://i.imgur.com/tZLqG4x.png)  
+_Hacemos una nueva transformación para obtener el max. del autoincremental de la tabla que venga como parámetro_
+
+![Transformación completa para obtener el máximo de la tabla - carga incremental -](https://i.imgur.com/m4zVNzl.png)  
+_Transformación completa para obtener el máximo de la tabla - carga incremental -_
+
+![Transformación completa para obtener el máximo de la fecha de la tabla - carga incremental -](https://i.imgur.com/7YzOr7t.png)  
+_Transformación completa para obtener el máximo de la fecha de la tabla - carga incremental -_
+
+![Variables de entorno](https://i.imgur.com/goSDAc6.png)  
+_Variables de entorno_
+
+![Asignación de variable autoincremental de registros](https://i.imgur.com/oVt1ig4.png)  
+_Asignación de variable autoincremental de registros_
+
+![Asignación de variable de fecha](https://i.imgur.com/uPXpEN9.png)  
+_Asignación de variable de fecha_
+
+![Modificación de la Select para leer incrementalmente](https://i.imgur.com/ixvcuJr.png)  
+_Modificación de la Select para leer incrementalmente_
+
+## Orquestar ETL en Pentaho: job
+
+![Job de clientes con un wait para sincronizar](https://i.imgur.com/L9IdCYT.png)  
+_Job de clientes con un wait para sincronizar_
+
+## Revisión de todo el ETL
+
+![Job con todas las transformaciones](https://i.imgur.com/o9dMcaH.png)  
+_Job con todas las transformaciones_

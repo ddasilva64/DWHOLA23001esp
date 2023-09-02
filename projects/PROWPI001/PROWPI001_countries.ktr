@@ -599,7 +599,7 @@
     </hop>
     <hop>
       <from>columns #10</from>
-      <to>#staging_07</to>
+      <to>#staging_01</to>
       <enabled>Y</enabled>
     </hop>
   </order>
@@ -630,7 +630,7 @@
     <accept_field/>
     <accept_stepname/>
     <file>
-      <name>D:\temp\Platzi\###resums\03_OUT - COURSES -\Fundamentos de ETL con Python y Pentaho\datasources\PopulationDataWorldBank.xlsx</name>
+      <name>D:\temp\Platzi\###resums\03_OUT - COURSES -\Data Warehousing and OLAP Modeling\datasources\PopulationDataWorldBank.xlsx</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>N</file_required>
@@ -754,7 +754,7 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <filename>D:\temp\Platzi\###resums\03_OUT - COURSES -\Fundamentos de ETL con Python y Pentaho\datasources\countries_eng.csv</filename>
+    <filename>D:\temp\Platzi\###resums\03_OUT - COURSES -\Data Warehousing and OLAP Modeling\datasources\countries_eng.csv</filename>
     <filename_field/>
     <rownum_field/>
     <include_filename>N</include_filename>
@@ -839,7 +839,7 @@
       <method>none</method>
       <schema_name/>
     </partitioning>
-    <filename>D:\temp\Platzi\###resums\03_OUT - COURSES -\Fundamentos de ETL con Python y Pentaho\datasources\2021_population.csv</filename>
+    <filename>D:\temp\Platzi\###resums\03_OUT - COURSES -\Data Warehousing and OLAP Modeling\datasources\2021_population.csv</filename>
     <filename_field/>
     <rownum_field/>
     <include_filename>N</include_filename>
@@ -1037,7 +1037,7 @@
     <rownum_field/>
     <encoding>UTF-8</encoding>
     <file>
-      <name>D:/temp/Platzi/###resums/03_OUT - COURSES -/Fundamentos de ETL con Python y Pentaho/GitHub/ETLPPT23001esp-master/proyectos/PROWPI001/arrangements/XML country areas not match input.xml</name>
+      <name>D:\temp\Platzi\###resums\03_OUT - COURSES -\Data Warehousing and OLAP Modeling\GitHub\DWHOLA23001esp-master\projects\PROWPI001\arrangements/XML country areas not match input.xml</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>N</file_required>
@@ -1098,13 +1098,13 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>832</xloc>
+      <xloc>816</xloc>
       <yloc>528</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
   <step>
-    <name>#staging_07</name>
+    <name>#staging_01</name>
     <type>XMLOutput</type>
     <description/>
     <distribute>Y</distribute>
@@ -1119,7 +1119,7 @@
     <xml_main_element>Rows</xml_main_element>
     <xml_repeat_element>Row</xml_repeat_element>
     <file>
-      <name>D:\temp\Platzi\###resums\03_OUT - COURSES -\Fundamentos de ETL con Python y Pentaho\GitHub\ETLPPT23001esp-master\proyectos\PROWPI001\arrangements\XML dimcountries</name>
+      <name>D:\temp\Platzi\###resums\03_OUT - COURSES -\Data Warehousing and OLAP Modeling\GitHub\DWHOLA23001esp-master\projects\PROWPI001\arrangements\XML dimcountries</name>
       <extention>xml</extention>
       <servlet_output>N</servlet_output>
       <do_not_open_newfile_init>N</do_not_open_newfile_init>
@@ -1196,7 +1196,7 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>368</xloc>
+      <xloc>512</xloc>
       <yloc>688</yloc>
       <draw>Y</draw>
     </GUI>
@@ -1224,7 +1224,7 @@
     </remotesteps>
     <GUI>
       <xloc>832</xloc>
-      <yloc>688</yloc>
+      <yloc>704</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -1259,7 +1259,7 @@
     </remotesteps>
     <GUI>
       <xloc>1248</xloc>
-      <yloc>688</yloc>
+      <yloc>704</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -1653,8 +1653,8 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>528</xloc>
-      <yloc>688</yloc>
+      <xloc>624</xloc>
+      <yloc>704</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -2050,7 +2050,7 @@
     </remotesteps>
     <GUI>
       <xloc>1360</xloc>
-      <yloc>688</yloc>
+      <yloc>704</yloc>
       <draw>Y</draw>
     </GUI>
   </step>
@@ -2091,7 +2091,7 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>992</xloc>
+      <xloc>976</xloc>
       <yloc>624</yloc>
       <draw>Y</draw>
     </GUI>
@@ -2133,7 +2133,7 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>992</xloc>
+      <xloc>976</xloc>
       <yloc>768</yloc>
       <draw>Y</draw>
     </GUI>
@@ -2175,8 +2175,8 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>688</xloc>
-      <yloc>688</yloc>
+      <xloc>720</xloc>
+      <yloc>704</yloc>
       <draw>Y</draw>
     </GUI>
   </step>

@@ -494,7 +494,7 @@
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>#staging_07</from>
+      <from>#staging_01</from>
       <to>sort #01</to>
       <enabled>Y</enabled>
     </hop>
@@ -505,7 +505,7 @@
     </hop>
   </order>
   <step>
-    <name>#staging_07</name>
+    <name>#staging_01</name>
     <type>getXMLData</type>
     <description/>
     <distribute>N</distribute>
@@ -529,7 +529,7 @@
     <rownum_field/>
     <encoding>UTF-8</encoding>
     <file>
-      <name>D:/temp/Platzi/###resums/03_OUT - COURSES -/Fundamentos de ETL con Python y Pentaho/GitHub/ETLPPT23001esp-master/proyectos/PROWPI001/staging/metadata.XML</name>
+      <name>${StagingPath}metadata.XML</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>N</file_required>
@@ -635,7 +635,7 @@
       </output>
     </remotesteps>
     <GUI>
-      <xloc>176</xloc>
+      <xloc>208</xloc>
       <yloc>32</yloc>
       <draw>Y</draw>
     </GUI>
@@ -654,23 +654,18 @@
     <fields>
       <field>
         <name>Key</name>
-        <rename/>
       </field>
       <field>
         <name>Meaning</name>
-        <rename/>
       </field>
       <field>
         <name>Standard</name>
-        <rename/>
       </field>
       <field>
         <name>Formula</name>
-        <rename/>
       </field>
       <field>
         <name>Units</name>
-        <rename/>
       </field>
       <select_unspecified>N</select_unspecified>
     </fields>

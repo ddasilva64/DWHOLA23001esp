@@ -489,12 +489,12 @@
   </connection>
   <order>
     <hop>
-      <from>#staging_02</from>
+      <from>#staging_01</from>
       <to>inner join #01</to>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>#staging_03</from>
+      <from>#staging_02</from>
       <to>inner join #01</to>
       <enabled>Y</enabled>
     </hop>
@@ -509,7 +509,7 @@
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>#staging_04</from>
+      <from>#staging_03</from>
       <to>columns #02</to>
       <enabled>Y</enabled>
     </hop>
@@ -534,7 +534,7 @@
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>#staging_05</from>
+      <from>#staging_04</from>
       <to>columns #04</to>
       <enabled>Y</enabled>
     </hop>
@@ -559,7 +559,7 @@
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>#staging_06</from>
+      <from>#staging_05</from>
       <to>columns #06</to>
       <enabled>Y</enabled>
     </hop>
@@ -590,7 +590,7 @@
     </hop>
   </order>
   <step>
-    <name>#staging_02</name>
+    <name>#staging_01</name>
     <type>getXMLData</type>
     <description/>
     <distribute>Y</distribute>
@@ -711,7 +711,7 @@
     </GUI>
   </step>
   <step>
-    <name>#staging_03</name>
+    <name>#staging_02</name>
     <type>getXMLData</type>
     <description/>
     <distribute>Y</distribute>
@@ -817,7 +817,7 @@
     </GUI>
   </step>
   <step>
-    <name>#staging_04</name>
+    <name>#staging_03</name>
     <type>getXMLData</type>
     <description/>
     <distribute>Y</distribute>
@@ -998,7 +998,7 @@
     </GUI>
   </step>
   <step>
-    <name>#staging_05</name>
+    <name>#staging_04</name>
     <type>getXMLData</type>
     <description/>
     <distribute>Y</distribute>
@@ -1149,7 +1149,7 @@
     </GUI>
   </step>
   <step>
-    <name>#staging_06</name>
+    <name>#staging_05</name>
     <type>getXMLData</type>
     <description/>
     <distribute>Y</distribute>
@@ -1879,8 +1879,8 @@
       <schema_name/>
     </partitioning>
     <join_type>INNER</join_type>
-    <step1>#staging_02</step1>
-    <step2>#staging_03</step2>
+    <step1>#staging_01</step1>
+    <step2>#staging_02</step2>
     <keys_1>
       <key>CountryCode</key>
     </keys_1>

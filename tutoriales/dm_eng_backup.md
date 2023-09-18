@@ -36,42 +36,63 @@ Types of **_DDM_**:
 
 # Some of the worst practices in Business Intelligence
 
-1. Go to **Physical phase** directly.
+1. Go to **Physical phase directly**.
 
-2. Think that is the same thing ER model and DDM.
+2. ER model is the same that DDM.
 
-3. Think that in DDM normalized DB is better than non normalized.
+3. **Directors or Managers designing DDM**.
 
-4. Directors or Managers, instead of mind in their own businesses, mind in desing of DDM.
+4. **Relate fact tables directly**.
 
-5. No reducir dimensiones en el DDM.
+5. Failure to constantly assess requirements and realities to provide a BI solution that is accepted by business users and supports their decision process.
 
-6. Confundir subdimensiones con jerarquías de datos.
 
-7. No definir claramente claves de relación de los datos.
 
-8. Relacionar tablas de hechos directamente.
+-------------------------------
 
-9. Montar Excels, como fuentes de datos, con estructuras normalizadas, para satisfacer a directivos sin conociemientos adecuados.
 
-10. Prescindir de DWH e ir directamente al diseño del DDM en la solución de BI.
+12. Do not load atomic data into dimensional structures.
 
-11. No asegurarse de que cada tabla de hechos tiene una tabla de dimensión tiempo asociada.
+9. Set up Excels, as data sources, with normalized structures.
 
-12. No cargar los datos atómicos en estructuras dimensionales.
+5. Not clearly defining data relationship keys.
 
-13. No crear la estructura de los modelos dimensionales en función de los procesos de negocio que vayamos a contemplar, específicamente.
+3. Not clear DDM rules.
 
-14. No resolver correspondencias muchos a muchos en tablas de hechos.
 
-15. No resolver correspondencias muchos a muchos en tablas de dimensiones.
+3. Normalized DB is better than non normalized in DDM.
 
-16. No almacenar las descripciones en las tablas de dimensión.
+13. Do not create the structure of the dimensional models based on the business processes that we are going to contemplate, specifically.
 
-17. No asegurarse de que las tablas dimensionales usan claves subrogadas.
 
-18. No crear dimensiones conformadas para integrar los datos de toda la empresa.
 
-19. No valorar constantemente los requerimientos y las realidades para proporcionar una solución DWH/BI que sea aceptada por los usuarios de negocios y que apoye su proceso de decisiones.
+11. Not ensuring that each fact table has an associated time dimension table.
 
-20. No asegurarsde que todos los hechos que están en una misma fact tenganel mismo nivel de granularidad.
+
+5. Do not reduce dimensions in the DDM.
+
+6. Confuse subdimensions with data hierarchies.
+
+
+
+
+
+10. Dispense with DWH and go directly to the DDM design in the BI solution.
+
+
+
+
+
+14. Do not resolve many-to-many correspondences in fact tables.
+
+15. Do not resolve many-to-many correspondences in dimension tables.
+
+16. Do not store descriptions in dimension tables.
+
+17. Not ensuring that dimension tables use surrogate keys.
+
+18. Do not create custom dimensions to integrate data from the entire company.
+
+
+
+20. You will not ensure that all the facts that are in the same fact have the same level of granularity.

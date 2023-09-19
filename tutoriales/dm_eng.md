@@ -31,9 +31,9 @@ Types of **_DDM_**:
     ![002-5-dimension snowflake schema](https://i.imgur.com/1Ata1st.png)
     _5-dimension snowflake schema (pic002)_
 
-- **_003-Constellation or Galaxy_** schemas (derived from prior types).
+- **_Constellation or Galaxy_** schemas (derived from prior types).
 
-    ![Constellation or Galaxy schema](https://i.imgur.com/mXHRJch.png)
+    ![003-Constellation or Galaxy schema](https://i.imgur.com/mXHRJch.png)
     _Constellation or Galaxy schema (pic003)_
 
 # Some of the worst practices in Dimensional Data Modeling

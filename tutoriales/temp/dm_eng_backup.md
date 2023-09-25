@@ -51,48 +51,11 @@ Types of **_DDM_**:
 -------------------------------
 
 
-12. Do not load atomic data into dimensional structures.
 
-9. Set up Excels, as data sources, with normalized structures.
-
-5. Not clearly defining data relationship keys.
-
-3. Not clear DDM rules.
-
-
-3. Normalized DB is better than non normalized in DDM.
-
-13. Do not create the structure of the dimensional models based on the business processes that we are going to contemplate, specifically.
-
-
-
-11. Not ensuring that each fact table has an associated time dimension table.
-
-
-5. Do not reduce dimensions in the DDM.
-
-6. Confuse subdimensions with data hierarchies.
-
-
-
-
-
-10. Dispense with DWH and go directly to the DDM design in the BI solution.
-
-
-
-
-
-14. Do not resolve many-to-many correspondences in fact tables.
-
-15. Do not resolve many-to-many correspondences in dimension tables.
-
-16. Do not store descriptions in dimension tables.
 
 17. Not ensuring that dimension tables use surrogate keys.
 
 18. Do not create custom dimensions to integrate data from the entire company.
 
+Not ensuring that each fact table has an associated time dimension table.
 
-
-20. You will not ensure that all the facts that are in the same fact have the same level of granularity.

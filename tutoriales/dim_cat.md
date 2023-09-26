@@ -223,11 +223,11 @@ Hi ha diferents tipus de **_SDC_**, que es classifiquen segons la manera com es 
 
 - **_Tipus 0_**: Preserva l'original.
 - **_Tipus 1_**: Es sobreescriu l'atribut actualitzat, es a dir, no es desen dades històriques.
-- **_Tipus 2_**: Afegeix un nou registre amb el canvi, amb la qual cosa, es manté un registre històric.
-- **_Tipus 3_**: Afegeix un nou atribut "anterior". Això guaRPLYDIMa històric, però afegint una nova columna per a l'atribut anterior i el modificat.
-- **_Tipus 4_**: Històric separat. **_SCD-4_** sovint s'utilitza amb "taules d'historial". Aquest mètode és similar a com funcionen les taules d'auditoria de bases de dades i les tècniques de captura de dades de canvi.
-- **_Tipus 5_**: Combina els enfocaments dels tipus 1 i 4 (1+4=5).
-- **_Tipus 6_**: Combina els enfocaments dels tipus 1, 2 i 3 (1+2+3=6).
+- **_Tipus 2_**: Afegeix un nou registre amb el canvi (fila).
+- **_Tipus 3_**: Afegeix un nou atribut (columna) "anterior". 
+- **_Tipus 4_**: Històric separat (*mini-dimensió*).
+- **_Tipus 5_**: SCD-1 + SCD-4 = SCD-5.
+- **_Tipus 6_**: SCD-1 + SCD-2 + SCD-3 = SCD-6.
 - **_Tipus 7_**: Consta de dues dimensions separades. Una dimensió es manté com un **_SCD-2_** típic. La seva clau substituta s'utilitza a la taula de fets. S'inclou un segon **_SCD-1_** que conté la vista "actual" de la dimensió. La seva clau duradora (del sistema **_OLTP_**) s'inclou a la taula de fets.
 
 #### Elecció del tipus de SCD
@@ -390,9 +390,78 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 
 ## SCD-4 (història separada)
 
-La idea darrere de **_SCD-4_** és gairebé la mateixa que **_SCD-2_**. Aquí, també mantindrem les dades històriques, però no a la mateixa taula. Crearem una nova taula històrica per mantenir-hi els registres antics. La separació de les dades històriques redueix les nostres dimensions i, per tant, redueix la complexitat i millora el rendiment si la majoria d'usos només necessiten el valor actual. **_SCD-4_** proporciona una solució per gestionar els canvis ràpids a les **_taules de dimensions_**.
+La **_SCD-4_** fa servir "*taules históriques*", a on una taula conserva les dades actuals i addicionalment s'utilitza una taula per mantenir un registre d'alguns o tots els canvis. Les dues **_SK_** (**_taula de dimensió_** i **_taula històrica_**) fan referència a la **_taula de fets_** per millorar el rendiment de la consulta.
 
-A l'exemple següent, imaginem el següents canvis a una taula de Productes, les quals enregistrarem a una **_taula de dimensió_** i a una d'hidtòrica:
+Per a l'exemple següent, el nom de la taula original (transaccional) és Proveïdor i la **_taula històrica_** és Proveïdor_Històric:
+
+| **SK** |**Key** | **Name**                 | **State** |
+| :----: | :----- | :----------------------- | :-------: |
+| 124    | ABC    | Acme & Johnson Supply Co | IL        |
+
+
+| **SK** |**Key** | **Name**                 | **State** | **Registration date** |
+| :----: | :----- | :----------------------- | :-------: | :-------------------: |
+| 123    | ABC    | Acme Supply Co           | AC        | 2003-06-14T00:00:00   |
+| 124    | ABC    | Acme & Johnson Supply Co | IL        | 2004-12-22T00:00:00   |
+
+Aquest mètode s'assembla a com funcionen les *taules d'auditoria* de BD. Aquesta és una manera fantàstica de fer un seguiment dels registres que tenen molts canvis al llarg del temps.
+
+A la taula històrica se li acostuma a dir *mini-dimensió*.
+
+La **_SCD-4_**s'utilitza quan la **_SCD-2_** creix ràpidament, a causa de que atributs de la dimensió canvien sovint. A la **_SCD-4_**, els atributs que canvien sovint s'eliminaran de la dimensió principal i s'afegiran a la *mini-dimensió*.
+
+Considerem un altre exemple, per explicar l'anterior, amb una **_taula de dimensió_** de Clients amb l'estructura següent:
+- Key (PK)
+- Data inici
+- Data final
+- Name
+- Data neixement
+- Estat
+- Franja edat
+- Franja ingressos
+- Franja compres
+
+Els atributs del client, com ara el nom, la data de naixement, l'estat del client, canvien molt poques vegades o ni tan sols canvien, ara bé s'espera que la franja d'edat, la franja d'ingressos i la franja de compra canviïn amb molta freqüència.
+
+Si una organització amb 100 milions de clients utilitza aquesta dimensió de Client, es pot esperar que aquesta dimensió creixi fins a 200 o 300 milions de registres en un any, suposant que hi haurà almenys dos o tres canvis per a un client per any.
+
+Aleshores, podem dividir la dimensió en dues dimensions, una amb els atributs que canvien amb menys freqüència i un altre amb els atributs que canvien amb més freqüència. Els atributs que canvien amb freqüència s'agruparan a la *mini-dimensió*. 
+
+Dimensió de Clients
+- Key (PK)
+- Data inici
+- Data final
+- Name
+- Data neixement
+- Estat
+
+Mini-dimensió
+- Key (PK)
+- Franja edat
+- Franja ingressos
+- Franja compres
+
+La *mini-dimensió* contindrà una fila per a cada possible combinació d'atributs. Al nostre cas, totes les combinacions possibles de franja d'edat, franja d'ingressos i franja de compres estaran disponibles a la *mini-dimensió* amb la mateixa **_PK_** que a la **_taula de dimensió_**.
+
+Si tenim 20 franges d'edat diferents, 4 franges d'ingressos diferents i 3 franges de compres, tindrem 20 X 4 X 3 = 240 combinacions possibles diferents. 
+
+Aquests valors es poden emplenar a la taula de **_mini-dimensió_** una vegada per sempre amb una **_SK_** que oscil·la entre 1 i 240.
+
+**_Nota important_**: A la *mini-dimensió* no s'emmagatzemen els atributs històrics, to i que la **_taula de fets_** es conserva l'historial d'assignació d'atributs de la dimensió.
+
+Com que les dues **_taules de dimensió_** es relacionen amb una **_taula de fets_** (Vendes), aleshores, aquesta tindrà la PK (natural) de la Dimensió de Clients y la PK de la **_mini-dimensió_** (SK).
+
+Fets de Vendes
+- PK_Clients
+- SK_Minidimensio
+- Data
+- Key Producte
+etc.
+
+Un repte que s'ens presente és quan la *mini-dimensió* comença a canviar ràpidament. Aleshores es poden introduir múltiples *mini-dimensions* per gestionar aquests escenaris. Si cap registre de fets ha d'associar la dimensió principal i la *mini-dimensió*, es pot utilitzar una **_taula de fets_** *sense fets* per associar la dimensió principal i la *mini-dimensió*.
+
+
+
 
 **_Taula transaccional de Productes (dia 1/1/2020)_**
 
@@ -466,7 +535,7 @@ Aquest mètode és semblant a com funcionen les taules d'**auditoria de BD** i l
 
 ## SCD-5
 
-El SCD-5 es basa en la *dimensió històrica* **_SCD-4_** incrustant una clau de "*perfil actual*" de *dimensió històrica* a la *dimensió base* que ha estat substituïda com a atribut de **_SCD-1_**. Aquest enfocament es coneix com a tipus 5 perquè 4 + 1 = 5.
+El SCD-5 es basa en la *mini-dimensió* **_SCD-4_** incrustant una clau de "*perfil actual*" de *dimensió històrica* a la *dimensió base* que ha estat substituïda com a atribut de **_SCD-1_**. Aquest enfocament es coneix com a tipus 5 perquè 4 + 1 = 5.
 
 ## SCD-6
 
@@ -521,9 +590,23 @@ Taula de dimensió (després de l'ETL)
 
 ## SCD-7 (Híbrid: clau subrogada i natural)
 
-Una implementació alternativa és col·locar tant la clau substituta com la clau natural a la taula de fets.   
+Una implementació alternativa és col·locar tant la clau substituta com la clau natural a la **_taula de fets_**.   
 
 Aquest mètode permet enllaços més flexibles a la dimensió, fins i tot si s'ha utilitzat **_SCD-2_** en lloc de **_SCD-6_**.
+
+## Resum SCD's
+
+| Tipus SCD | Taula de dimensió                           | Taula de fets                                                  |
+| :-------: | :------------------------------------------ | :------------------------------------------------------------- |
+| SCD-0     | Sense canvis al valor de l'atribut          | Fets associats amb el valor original de l'atribut              |
+| SCD-1     | Sobreescriu l'atribut actualitzat           | Fets associats amb el valor actual de l'atribut                |
+| SCD-2     | Afegeix un nou registre amb el canvi (fila) | Fets associats amb el valor de l'atribut quan el fet occurreix |
+| SCD-3     | Afegeix un nou atribut (columna) "anterior" | Fets associats amb el valor de l'atribut anterior i actual     |
+| SCD-4     | Històric separat (*mini-dimensió*)          | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen |
+| SCD-5     | SCD-4 + SCD-1                               | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen, a més dels canvis de valors ràpids de l'atributs actuals |
+| SCD-6     | SCD-1 + SCD-2 + SCD-3                       | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen, a més dels canvis de valors ràpids de l'atributs actuals |
+
+https://www.kimballgroup.com/2013/02/design-tip-152-slowly-changing-dimension-types-0-4-5-6-7/
 
 ## Algunes de les pitjors pràctiques en treballar amb Dimensions
 

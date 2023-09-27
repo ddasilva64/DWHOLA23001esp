@@ -460,82 +460,9 @@ etc.
 
 Un repte que s'ens presente és quan la *mini-dimensió* comença a canviar ràpidament. Aleshores es poden introduir múltiples *mini-dimensions* per gestionar aquests escenaris. Si cap registre de fets ha d'associar la dimensió principal i la *mini-dimensió*, es pot utilitzar una **_taula de fets_** *sense fets* per associar la dimensió principal i la *mini-dimensió*.
 
-
-
-
-**_Taula transaccional de Productes (dia 1/1/2020)_**
-
-| **ID** | **Descripció** | **Preu unitari** |
-| :----: | :------------- | :--------------- |
-| 100    | Producte 1     | 99,99            | 
-| 101    | Producte 2     | 101,01           |
-
-**_Taula dimensional de Productes (dia 1/1/2020)_**
-
-| **SK** | **ID** | **Descripció** | **Preu unitari** | **Data Càrrega** | 
-| :----: | :----: | :------------- | :--------------- | :--------------: | 
-| 1      | 100    | Producte 1     | 99,99            | 01/01/2020       | 
-| 2      | 100    | Producte 2     | 101,01           | 01/01/2020       |
-
-**_Taula històrica Productes\_Històrics (dia 1/1/2020)_**
-
-| **SK** | **ID** | **Descripció** | **Preu unitari** | **Data Inici** | **Data Final** | **Data Actualització** |
-| :----: | :----: | :------------- | :--------------- | :------------: | :------------: | :--------------------: | 
-| 1      | 100    | Producte 1     | 99,99            | 01/01/2020     |                | 01/01/2020             |
-| 2      | 101    | Producte 2     | 101,01           | 01/01/2020     |                | 01/01/2020             |
-
-**_Taula transaccional de Productes (dia 2/1/2020)_**
-
-| **ID** | **Descripció** | **Preu unitari** |
-| :----: | :------------- | :--------------- |
-| 102    | Producte 3     | 102,02           | 
-| 101    | Producte 2     | 101,01           |
-
-**_Taula dimensional de Productes (dia 2/1/2020)_**
-
-| **SK** | **ID** | **Descripció** | **Preu unitari** | **Data Càrrega** | 
-| :----: | :----: | :------------- | :--------------- | :--------------: |
-| 3      | 102    | Producte 3     | 102,02           | 02/01/2020       | 
-| 2      | 101    | Producte 2     | 101,01           | 02/01/2020       |
-
-**_Taula històrica Productes\_Històrics (dia 2/1/2020)_**
-
-| **SK** | **ID** | **Descripció** | **Preu unitari** | **Data Inici** | **Data Final** | **Data Actualització** |
-| :----: | :----: | :------------- | :--------------- | :------------: | :------------: | :--------------------: |
-| 1      | 100    | Producte 1     | 99,99            | 01/01/2020     | 02/01/2020     | 01/01/2020             |
-| 2      | 101    | Producte 2     | 101,01           | 01/01/2020     |                | 01/01/2020             |
-| 3      | 102    | Producte 3     | 102,02           | 02/01/2020     |                | 02/01/2020             |
-
-Ara imaginem que el dia 3 modifiquem el preu unitari del Producte 2:
-
-**_Taula transaccional de Productes (dia 3/1/2020)_**
-
-| **ID** | **Descripció** | **Preu unitari** |
-| :----: | :------------- | :--------------- |
-| 102    | Producte 3     | 102,02           | 
-| 101    | Producte 2     | 104,04           |
-
-**_Taula dimensional de Productes (dia 3/1/2020)_**
-
-| **SK** | **ID** | **Descripció** | **Preu unitari** | **Data Càrrega** | 
-| :----: | :----: | :------------- | :--------------- | :--------------: |
-| 3      | 102    | Producte 3     | 102,02           | 03/01/2020       | 
-| 2      | 101    | Producte 2     | 103,03           | 03/01/2020       |
-
-**_Taula històrica Productes\_Històrics (dia 2/1/2020)_**
-
-| **SK** | **ID** | **Descripció** | **Preu unitari** | **Data Inici** | **Data Final** | **Data Actualització** |
-| :----: | :----: | :------------- | :--------------- | :------------: | :------------: | :--------------------: | 
-| 1      | 100    | Producte 1     | 99,99            | 01/01/2020     | 02/01/2020     | 01/01/2020             | 
-| 2      | 101    | Producte 2     | 101,01           | 01/01/2020     |                | 01/01/2020             |
-| 2      | 101    | Producte 2     | 104,04           | 01/01/2020     |                | 03/01/2020             |
-| 3      | 102    | Producte 3     | 102,02           | 01/01/2020     |                | 02/01/2020             |
-
-Aquest mètode és semblant a com funcionen les taules d'**auditoria de BD** i les tècniques de captura de dades de canvi. Serveix per **verificar com canvien les dades**. En aquest model la dimensió s'ha transformat en una *mini-dimensió* i estarà relaracionada (igual que la dimensió històrica, pel **_SK_**).
-
 ## SCD-5
 
-El SCD-5 es basa en la *mini-dimensió* **_SCD-4_** incrustant una clau de "*perfil actual*" de *dimensió històrica* a la *dimensió base* que ha estat substituïda com a atribut de **_SCD-1_**. Aquest enfocament es coneix com a tipus 5 perquè 4 + 1 = 5.
+La tècnica de tipus 5 es basa en la mini-dimensió de tipus 4 incrustant una clau de mini-dimensió del "perfil actual" a la dimensió base que es sobreescriu com a atribut de tipus 1. Aquest enfocament, anomenat tipus 5 perquè 4 + 1 és igual a 5, permet accedir als valors dels atributs de mini-dimensió assignats actualment juntament amb els altres de la dimensió base sense enllaçar-los mitjançant una taula de fets. Lògicament, normalment representem la dimensió base i l'estabilizador del perfil de minidimensió actual com una taula única a la capa de presentació. Els atributs dels estabilizadors haurien de tenir noms de columnes diferents, com ara "Nivell d'ingressos actual", per diferenciar-los dels atributs de la minidimensió vinculada a la taula de fets. L'equip d'ETL ha d'actualitzar/sobreescriure la referència de minidimensió tipus 1 sempre que la minidimensió actual canviï amb el temps.
 
 ## SCD-6
 
@@ -594,6 +521,33 @@ Una implementació alternativa és col·locar tant la clau substituta com la cla
 
 Aquest mètode permet enllaços més flexibles a la dimensió, fins i tot si s'ha utilitzat **_SCD-2_** en lloc de **_SCD-6_**.
 
+Amb la **_SCD-7_**, la **_taula de fets_** conté **_FKs_** dobles per a una dimensió determinada: una **_SK_** enllaçada a la taula de dimensions on es fan el seguiment dels atributs del tipus 2, més la clau natural duradora de la dimensió enllaçada a la fila actual de la dimensió tipus 2 per presentar el valor l'actual de l'atribut.
+
+La **_SCD-7_** ofereix la mateixa funcionalitat que la **_SCD-6_**, però s'aconsegueix mitjançant claus duals en lloc de sobreescriure físicament els atributs actuals com al**_ SCD-6_**. Igual que els altres enfocaments híbrids, els atributs de la dimensió actual s'han d'etiquetar de manera distinta per minimitzar la confusió.
+
+Imaginem el següent cas:
+
+Vendes (**_taula de fets_**)
+- Data (**_PK_**)
+- Clau producte (**_FK_**)
+- Clau duradora de producte (**_DK_**)
+- més **_FKs_**
+- fets
+
+Productes (**_taula de dimensió_**)
+- Clau producte (**_PK_**)
+- **_SK_**
+- **_DK_**
+- Descripció
+- Data inicial
+- Data final
+- ...
+
+Productes actuals (**_taula de dimensió actual_**)
+- **_DK_**
+- Descripció
+- ...
+
 ## Resum SCD's
 
 | Tipus SCD | Taula de dimensió                           | Taula de fets                                                  |
@@ -604,9 +558,12 @@ Aquest mètode permet enllaços més flexibles a la dimensió, fins i tot si s'h
 | SCD-3     | Afegeix un nou atribut (columna) "anterior" | Fets associats amb el valor de l'atribut anterior i actual     |
 | SCD-4     | Històric separat (*mini-dimensió*)          | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen |
 | SCD-5     | SCD-4 + SCD-1                               | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen, a més dels canvis de valors ràpids de l'atributs actuals |
-| SCD-6     | SCD-1 + SCD-2 + SCD-3                       | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen, a més dels canvis de valors ràpids de l'atributs actuals |
+| SCD-6     | SCD-1 + SCD-2 + SCD-3                       | Fets associats amb el valor de l'atribut quan el fet occurreix, més valors de l'atributs actuals |
+| SCD-7     | SCD-2 + una vista a les files actuals       | Fets associats amb el valor de l'atribut quan el fet occurreix, més valors de l'atributs actuals |
 
 https://www.kimballgroup.com/2013/02/design-tip-152-slowly-changing-dimension-types-0-4-5-6-7/
+
+==> MODIFICAR SCD-5
 
 ## Algunes de les pitjors pràctiques en treballar amb Dimensions
 

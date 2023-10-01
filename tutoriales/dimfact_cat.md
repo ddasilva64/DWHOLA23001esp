@@ -1,6 +1,95 @@
-# Dimensions
+# Dimensions i Fets - cat -
 
-## La dimensió Temps (Calendar Date dimension)
+Per construir un **_dm_**, cal tenir en compte un conjunt de tècniques i conceptes per dissenyar el nostre **_DWH_**. Una part fonamental d'aquest és la tipologia de taules on desem les dades.
+
+- **_Taules de fets_**
+	- Allò que volem mesurar o analitzar.
+	- Són les taules principals del **_dm_**.
+	- Contenen claus foranes (**_FK_**) per relacionar-se amb les **_taules de dimensió_**.
+	- Contenen mètriques (també anomenades mesures), les quals representen allò que volem mesurar o analitzar.
+	- Generalment són valors numèrics.
+	- Eviten la redundància d'atributs a les **_taules de dimensions_**.
+	- Normalment tenen molts (milions) de registres.
+	- Exemples: Vendes, Compres, Moviments de Comptabilitat, Moviments de Magatzem, etc.
+
+- **_Taules de dimensió_**
+	- Com volem mesurar allò que contenen les **_taules de fets_**.
+	- Són taules simples i normalitzades.
+	- Contenen claus primàries (**_PK_**) per relacionar-se amb les **_taules de fets_**.
+	- Els atributs són característiques de les **_taules de fets_**.
+	- No hi ha límit en el seu nombre al **_DWH_**.
+	- Poden contenir una o diverses relacions jeràrquiques.
+	- Tenen menys registres que les **_taules de fets_**.
+	- Exemples: Clients, Productes, Magatzems, Proveïdors, Calendari, etc.
+
+## Fets (fact tables)
+ 
+Són una representació dun procés de negoci. Pel que fa a disseny, permeten desar dos tipus d'atributs diferenciats:
+
+- Mesures del procés/activitat/flux de treball/esdeveniment que es pretén modelitzar.
+- **_FKs_** cap a registres en una **_taula de dimensió_** (vista de negoci).
+
+### Fets transaccionals (Transaction Fact Table - TFT -)
+
+Permeten analitzar les dades amb el màxim detall.
+
+Per exemple, en una venda que té com a resultat mètriques com a import d'aquesta.
+
+### Fets sense mesures (Factless Fact Tables/Coverage Table - FFT/CT -)
+
+Taules que no tenen mesures però tenen sentit, atès que representen el fet que succeeixi l'esdeveniment. Sovint s'afegeixen comptadors a aquestes taules per facilitar les consultes SQL.
+
+Per exemple, l'assistència a un acte benèfic en què per cada persona que hi assisteix tenim un registre però podríem no tenir cap mètrica associada més.
+
+### Fets periòdics (Periodic Snapshot Fact Table - PSFT -)
+
+Són usades per recollir informació a intervals de temps regulars. Depenent de la situació mesurada o de la necessitat de negoci, aquest tipus de **_taules de fet_** són una agregació de **_FFT/CT_** o estan dissenyades específicament.
+
+Per exemple, el Balanç mensual, en què les dades recullen acumulades de forma mensual.
+
+### Fets agregats (Accumulating Snapshot Fact Tables - ASFT -)
+
+Tepresenten el cicle de vida complet d'una activitat o procés, amb un principi i un final. Es caracteritzen per presentar múltiples dimensions relacionades
+amb els esdeveniments presents en un procés.
+
+Per exemple, un procés de matriculació d'un estudiant i que recopila dades durant el període de vida que solen substituir els anteriors (superació i recopilació
+d'assignatures, per exemple).
+
+## Dimensions (dim tables)
+
+Les dimensions recullen els punts d'anàlisi d'1 fet, és a dir, són les preguntes que fem per conèixer els fets.
+
+Per exemple, una venda es pot analitzar respecte del dia de venda, producte, client, venedor, canal de venda, etc.
+
+Pel que fa a la gestió històrica de les dades, les **_taules de dimensions_** –**_SCD_**– es poden classificar de diferents maneres:
+
+- **_Dimensió de Temps_** (especial)
+- **_Classificació històrica_**
+	- Dimensions que canvien lentament (**_Slowly Changing Dimensions - SCD -_**)
+		- **_Tipus 0_**: Preserva l'original.
+		- **_Tipus 1_**: Es sobreescriu l'atribut actualitzat, es a dir, no es desen dades històriques.
+		- **_Tipus 2_**: Afegeix un nou registre amb el canvi (fila).
+		- **_Tipus 3_**: Afegeix un nou atribut (columna) "anterior". 
+		- **_Tipus 4_**: Històric separat (*mini-dimensió*).
+		- **_Tipus 5_**: SCD-1 + SCD-4 = SCD-5.
+		- **_Tipus 6_**: SCD-1 + SCD-2 + SCD-3 = SCD-6.
+		- **_Tipus 7_**: Afegeix una fila de dimensió **_SCD-2_** amb un valor d'atribut nou, a més de la visualització limitada a les files i/o els valors d'atribut actuals.
+	- Dimensions que canvien ràpidament (**_Rapidly Changing Dimensions - RCD -_**)
+		- Dimensions monstre (**_Monster Dimensions - MONSDIM_** -)
+		- Dimensions pont (**_Bridge Dimension - BRIDDIM-_**)
+- **_Clasificació funcional_**
+	- Dimensions reduïdes (**_Shrunken Dimensions - SHRKDIM -_**)
+	- Dimensions conformades (**_Conformed Dimensions - CONFDIM -_**)
+	- Dimensions brossa (**_Junk Dimensions - JUNKDIM -_**)
+	- Dimensions de joc de rol (**_Role-playing dimensions - RPLYDIM -_**)
+	- Dimensions degenerades (**_Degenerate Dimensions - DEGEDIM -_**)
+	- Dimensions estabilizadores (**_Outrigger Dimensions - OUTGDIM -_**)
+	- Dimensions estàtiques (**_Static Dimensions - STATDIM -_**)
+	- Dimensions apilades **_(Stacked Dimensions - STACDIM -_**)
+	- Dimensió diferida (**_Deferred Dimension - DEFEDIM -_**)
+	- Dimensió distorsionada (**_Distorted Dimension - DISTDIM -_**)
+
+### La dimensió Temps (Calendar DateTime Dimension - CDTD -)
 
 En qualsevol **_DWH_**, es poden trobar diversos cubs amb les seves **_taules de fets_** amb registres amb variables d'interès pel negoci que han de ser estudiades. També, com s'ha comentat anteriorment, cada **_taula de fets_** estarà envoltada de diverses **_taules de dimensió_**, amb els paràmetres que ens permetran fer l'anàlisi dels fets que es volen estudiar. Un paràmetre que amb tota probabilitat tindrem a tots els cubs és el Temps, ja que l'habitual és emmagatzemar els fets a mesura que van succeint al llarg del temps, obtenint així una sèrie temporal de la variable a estudiar.
 
@@ -69,9 +158,9 @@ Amb les addicions descrites podríem tenir una taula de Temps com la de la figur
 
 https://spa.myservername.com/dimensional-data-myodel-data-warehouse-tutorial-with-examples
 
-## Tipus de dimensions
+### Tipus de dimensions
 
-### Dimensions reduïdes (Shrunken Dimensions - SHRKDIM -)
+#### Dimensions reduïdes (Shrunken Dimensions - SHRKDIM -)
 
 Les **_SHRKDIMs_** ens donen quan tenim la necessitat de mostrar l'agregació de les dades que tenim a **_DWH_**. És a dir, necessitem mostrar una granularitat més alta que la que tenim a **_DWH_**.
 
@@ -83,7 +172,9 @@ Un altre exemple, menys intuïtiu, seria considerar les Vendes per Ciutat. Alesh
 
 **_Nota important_**: Algunes eines de **_BI_**, com **_Power BI_**, tenen la possibilitat de crear segmentacions de **_taules de fets_**, sense extreure **_SHRKDIMs_** de la mateixa. Això ens pot donar com a resultat un **_DDM_** incomplet al **_DWH_**, sobretot si decidim explotar les dades en un altre entorn, com **_Python_** (fora de **_Power BI_**).
 
-### Dimensions conformades (Conformed Dimensions - CONFDIM -)
+#### Dimensions conformades (Conformed Dimensions - CONFDIM -)
+
+Permeten compartir informació entre dimensions, amb la qual cosa, poder realitzar consultes conjuntes. 
 
 A un **_DWH_**, una **_CONFDIM_** és una dimensió que té el mateix significat a cada fet amb què es relaciona. Les **_CONFDIMs_** permeten categoritzar i descriure fets i mesures de la mateixa manera a través de múltiples **_taules de fets_** o Data Marts (**_DM_**), garantint la coherència d'informes a tota l'empresa.
 
@@ -93,11 +184,13 @@ L'exemple més clàssic de **_CONFDIM_** és la taula de Temps, ja que podem pre
 
 **_Atenció!_**: Si no hem fet les preguntes de negoci adeqüades, no contemplarem dimensions, que si són prou generalitzades al nostre **_DWH_**, seran **_CONFDIMs_** no contemplades.
 
-### Dimensions brossa (Junk Dimensions - JUNKDIM -)
+#### Dimensions brossa (Junk Dimensions - JUNKDIM -)
 
-- Redueix el nombre de dimensions (columnes de caRPLYDIMinalitat baixa) al model dimensional i redueix el nombre de columnes a la **_taula de fets_**. És una col·lecció de codis transnacionals aleatoris, flags o atributs de text.
+Contenen informació volàtil que s'utilitza puntualment i que no s'acostuma a guarda de manera permanent al **_DWH_**.
 
-- Pot optimitza l'espai, ja que les **_taules de fets_** *no haurien d'incloure camps de text ni de caRPLYDIMinalitat baixa* (**pràctica molt qüestionable**). Inclou principalment mesures, claus externes i claus de dimensió degenerades (**_DEGEDIMs_**).
+- Redueix el nombre de dimensions (columnes de cardinalitat baixa) al model dimensional i redueix el nombre de columnes a la **_taula de fets_**. És una col·lecció de codis transnacionals aleatoris, flags o atributs de text.
+
+- Pot optimitza l'espai, ja que les **_taules de fets_** *no haurien d'incloure camps de text ni de cardinalitat baixa* (**pràctica molt qüestionable**). Inclou principalment mesures, claus externes i claus de dimensió degenerades (**_DEGEDIMs_**).
 
 <p><br></p>
 
@@ -108,7 +201,7 @@ _Sense JUNKDIM_
 
 <p><br></p>
 
-Exemple amb una **_taula de fets_** de Cotxes i una **_taules de dimensió_** de Característiques del cotxe.
+Exemple amb una **_taula de fets_** de Cotxes i una **_taula de dimensió_** de Característiques del cotxe.
 
 ![Amb JUNKDIM](https://i.imgur.com/dw1nykb.png)  
 _Amb JUNKDIM_
@@ -117,9 +210,9 @@ _Amb JUNKDIM_
 
 **_Nota_**: És com a mínim una pràctica qüestionable, atés que ens interesa des normalitzar les dimensions i dotar de significat les mètriques de les **_taules de fets_**. Al cas esposat, la pràctica més recomenada seria considerar els Cotxes com a **_taula de dimensió_** d'1 **_taula de fets_** de Vendes i llestos.
 
-### Dimensions de joc de rol (Role-playing dimensions - RPLYDIM -)
+#### Dimensions de joc de rol (Role-playing dimensions - RPLYDIM -)
 
-Una **_RPLYDIM_** és una dimensió que fa referència a múltiples propòsits dins d'1 **_taula de fets_**.
+Les **_RPLYDIMs_** tenen assignat un significat. És a dir, una **_RPLYDIM_** és una dimensió que fa referència a múltiples propòsits dins d'1 **_taula de fets_**.
 
 El millor exemple per una **_RPLYDIM_** és novament una **_taula de dimensió_** de Temps, ja que el mateix atribut de data en la dimensió es pot fer servir per a diferents propòsits a la mateixa **_taula de fets_**. Per exemple a la **_taula de fets_** de Vendes poden estar enregistrades la data de comanda, de lliurament, de transacció, de cancel·lació, de lliurament, etc. Totes aquestes dades es relacionen amb la data de la **_taula de dimensió_** de Temps.
 
@@ -155,17 +248,21 @@ Altres solucions, ens poden complicar la vida com muntar diferents vistes (al no
 
 **_Atenció!_**: És imprescindible definir bé les **_RPLYDIMs_** per que funcioni bé el nostre **_pipeline_**. Això implica que, com a **Enginyers de Dades** **hem de conèixer**, al **_pipeline_** del nostre projecte, **des del negoci del client fins la solució final** en que mostrarem el resultat.
 
-### Dimensions degenerades (Degenerate Dimensions - DEGEDIM -)
+#### Dimensions degenerades (Degenerate Dimensions - DEGEDIM -)
 
-Hi pot haver pocs atributs que no puguin ser dimensions (mètriques) ni fets (mesures) però necessiten anàlisi. Tots aquests atributs es poden traslladar a dimensions degenerades.
+Es troben com a atributs a la **_taula de fets_**, tenen significat des del punt de vista de l'anàlisi. Contenen informació de baixa cardinalitat formada per relacions dicotòmiques. Freqüentment, només contenen un atribut i per això, no s'acostuma a crear una taula a part. 
 
-Per exemple, podem considerar el número de comanda, el número de factura, etc., com a atributs de **_DEGEDIMs_**.
+Es a dir, són atributs que no poden ser dimensions (mètriques) ni fets (mesures) però necessiten anàlisi. Tots aquests atributs si es treuen de la taula de fets es traslladen a **_DEGEDIMs_**.
 
-Una factura pot tenir un atribut de nom de client, però ja forma part de la **_taula de dimensió_** Client. Una **_DEGEDIM_** és una part de la **_taula de fets_**, que no és una mesura, però que no deixa de ser una dimensió, la qual cosa es contradictòria.
+Per exemple, podem considerar el número de comanda, el número de factura, el gènere d'un pacient etc., com a atributs de **_DEGEDIMs_**.
+
+Una factura pot tenir un atribut de nom de client, però ja forma part de la **_taula de dimensió_** Client. 
+
+Una **_DEGEDIM_** és una part de la **_taula de fets_**, que no és una mesura, però que no deixa de ser una dimensió, la qual cosa es contradictòria.
 
 **_Avís!_**: Definir **_DEGEDIMs_** fora d'1 **_taula de fets_** és un error.
 
-## Dimensions estabilizadores (Outrigger Dimensions - OUTGDIM -)
+#### Dimensions estabilizadores (Outrigger Dimensions - OUTGDIM -)
 
 Dimensions que fan referència a altres dimensions mitjançant claus externes (subdimensions). 
 
@@ -188,15 +285,21 @@ El segon model està des normalitzat i és una millor solució a un **_DDM_**.
 
 **_Avís!_**: Hem d'intentar evitar les **_OUTGDIM_** al nostre **_DDM_**.
 
-## Dimensions estàtiques (Static Dimensions - STATDIM -)
+#### Dimensions estàtiques (Static Dimensions - STATDIM -)
 
 Venen del no-res, són dimensions que no existeixen la BD **_OLTP_** d'origen, com a entitats.  
 
 Les dimensions estàtiques es generen mitjançant un script **_SQL_**, un procediment emmagatzemat o un fitxer extern i es generen manualment.
 
-**_Avís!_**: No hem de confiar en els usuaris (Directors o Gerents), si manquen entitats a la BD **_OLTP_** (que es transformaran en dimensions al **_DDM_**), les hem d'afegir-les, abans del **_DWH_** i s'han de relacionar si no és al **_DWH_**.
+Com que no s'extreuen de la font de dades **_OLTP_**, aleshores es pot considerar que es creen en el context del **_DWH_**. 
 
-## Dimensions que canvien lentament (Slowly Changing Dimensions - SCD -)
+Una pràctica molt saludable és no crear-les al **_DWH_**, sinó a un full de càlcul al servidor corporatiu.
+
+Una dimensió que no existeix a la **_OLTP_**, no necessàriament han de ser una **_STATDIM_**. Però si col·loquem les dimensions estàtiques i dinàmiques, que no existeixen a la **_OLTP_**, a un llibre (Excel, per exemple) al servidor i les posem a disposició de l'usuari, aleshores aquest serà conscient de les entitats estàtiques. Si creem les **_STATDIM_** únicament al **_DWH_**, aleshores això pot, molt possiblement, generar desconfiança en l'usuari, perquè no les veu.
+
+**_Avís!_**: No hem de confiar en els usuaris (Directors o Gerents), si manquen entitats a la BD **_OLTP_** (que es transformaran en dimensions al **_DDM_**), hem d'afegir-les, abans del **_DWH_** i s'han de relacionar al **_DWH_**.
+
+#### Dimensions que canvien lentament (Slowly Changing Dimensions - SCD -)
 
 Una **_SCD_** a un **_DWH_** és una dimensió que conté dades relativament estàtiques que poden canviar lentament i de manera imprevisible, en lloc de seguir un horari regular. Alguns exemples de dimensions típiques que canvien lentament són entitats com Localitzacions Geogràfiques, Clients o Noms de Productes. ([Wikipedia](https://en.wikipedia.org/wiki/Slowly_changing_dimension)).  
 
@@ -207,87 +310,37 @@ _Dimensió (imatge 001)_
 
 <p><br></p>
 
-### Tipus d'atributs
+##### Tipus d'atributs
 
 - **_Jeràrquics_**: Permeten passar del general al particular, o consolidar i desagregar. Per exemple: país.
 - **_Descriptius_**: Informació rellevant, que és purament descriptiva. Per exemple: adreça, telèfon, mida, clima.
 - **_Control_**: Dades d'auditoria, que no pertanyen al coneixement del negoci. Per exemple: la data d'enregistrament de la dada.
 
-### Tipus de SDC
+##### Tipus de SDC
 
 A una BD dimensional, els **_SCDs_** són aquelles dimensions que canvien amb el temps, però no necessàriament de manera constant o previsible. **Per exemple, a una taula de dades de Clients, l'adreça del client pot canviar amb el temps, però no tots els clients canvien l'adreça a la mateixa velocitat. Alguns clients poden canviar l'adreça cada mes, mentre que altres poden mantenir la mateixa adreça durant anys**.
 
 La gestió adequada de les **_SCD_** és important per mantenir l'exactitud i la integritat de les dades dimensionals en una base de dades, ja que permet als usuaris realitzar anàlisis històriques i comparar dades al llarg del temps.
 
-Hi ha diferents tipus de **_SDC_**, que es classifiquen segons la manera com es gestionen els canvis a les dimensions.
-
-- **_Tipus 0_**: Preserva l'original.
-- **_Tipus 1_**: Es sobreescriu l'atribut actualitzat, es a dir, no es desen dades històriques.
-- **_Tipus 2_**: Afegeix un nou registre amb el canvi (fila).
-- **_Tipus 3_**: Afegeix un nou atribut (columna) "anterior". 
-- **_Tipus 4_**: Històric separat (*mini-dimensió*).
-- **_Tipus 5_**: SCD-1 + SCD-4 = SCD-5.
-- **_Tipus 6_**: SCD-1 + SCD-2 + SCD-3 = SCD-6.
-- **_Tipus 7_**: Consta de dues dimensions separades. Una dimensió es manté com un **_SCD-2_** típic. La seva clau substituta s'utilitza a la taula de fets. S'inclou un segon **_SCD-1_** que conté la vista "actual" de la dimensió. La seva clau duradora (del sistema **_OLTP_**) s'inclou a la taula de fets.
-
-#### Elecció del tipus de SCD
+##### Elecció del tipus de SCD
 
 La elecció del tipus de **_SCD_** a utilitzar depèn de les necessitats específiques del **_DWH_** i les necessitats d'anàlisi. És important tenir en compte factors com la importància de les dades històriques, la freqüència dels canvis a les dimensions i les implicacions d'emmagatzematge i rendiment de cada enfocament.
 
 Les **_SCDs_** són un aspecte crucial dels **_DWHs_** ja que permeten representar les dades al llarg del temps, facilitant així un anàlisi i informes històrics precisos.
 
-## SDC-0
+##### SDC-0
 
-### Atributs SCD-0
+**_SCD-0_** no té en compte la gestió dels canvis històrics. S'aplica quan no es canvia mai la informació, es dir, els atributs al **_SCD-0_** mai canvien i s'assignen a atributs que tenen **valors** duradors o que es descriuen com a "**originals**".  
 
-Els atributs al **_SCD-0_** mai canvien i s'assignen a atributs que tenen **valors** duradors o que es descriuen com a "**originals**".  
-Exemples: data de naixement, puntuació de crèdit original.  
+Exemples: Data de naixement, puntuació de crèdit original.  
+
 S'aplica a la majoria dels atributs de les dimensions. 
 
-El que vol dir, tot plegat, és que **cada vegada s'importen tots els registres de la taula transaccional (esborrant els que existien abans a la taula dimensional)**. No hi ha canvis, es a dir, els registres a la taula dimensional són els "**originals**" a la taula transaccional, sense canvis.
+El que vol dir, tot plegat, és que, **com que a la taula original no hi ha canvis, aleshores tampoc n'hi ha en la dimensió**.
 
-Exemple: Imaginem que importem directament una taula de productes dins del nostre **_DM_** al **_DWH_**. Sería una **_SCD-0_**.
+##### SCD-1
 
-**_Taula transaccional dia 1_**
-
-| ID producte | Descripció | Talla      | Preu   |
-| :---------- | :--------- | :--------- | -----: |
-| a003        | pantaló H  | S          | $20.19 |
-| a001        | pantaló H  | M          | $21.20 |
-| a004        | pantaló H  | L          | $22.21 |
-| a016        | pantaló H  | XL         | $23.22 |
-
-**_Taula dimensional dia 1_**
-
-| ID producte | Descripció | Talla      | Preu   |
-| :---------- | :--------- | :--------- | -----: |
-| a003        | pantaló H  | S          | $20.19 |
-| a001        | pantaló H  | M          | $21.20 |
-| a004        | pantaló H  | L          | $22.21 |
-| a016        | pantaló H  | XL         | $23.22 |
-
-**_Taula transaccional dia 2_**
-
-| ID producte | Descripció | Talla      | Preu         |
-| :---------- | :--------- | :--------- | -----------: |
-| a003        | pantaló H  | S          | $20.19       |
-| a001        | pantaló H  | M          | $21.20       |
-| a004        | pantaló H  | L          | $22.21       |
-| a016        | pantaló H  | XL         | **_$24.23_** |
-
-**_Taula dimensional dia 2_**
-
-| ID producte | Descripció | Talla      | Preu         |
-| :---------- | :--------- | :--------- | -----------: |
-| a003        | pantaló H  | S          | $20.19       |
-| a001        | pantaló H  | M          | $21.20       |
-| a004        | pantaló H  | L          | $22.21       |
-| a016        | pantaló H  | XL         | **_$24.23_** |
-
-## SCD-1
-
-La **_SCD-1_** significa que la dada antiga s'obre amb nova dada cada vegada que es produeix un canvi.  
-**És apropiat quan les dades històriques no són importants o quan es poden recuperar d'altres fonts**.  
+**_SCD-1_** no guarda històrics. La nova informació sobreescriu l'antiga sempre. Principalment la sobreescriptura es fa per errors de qualitat de dades. Aquest tipus de dimensions és fàcil de mantenir i es fa servir quan la informació històrica no és important. És a dir, **és apropiat quan les dades històriques no són importants o quan es poden recuperar d'altres fonts**.  
 
 Exemple: Imaginem el registre d'1 alumne en una Facultat i que després, per que s'ho repensa, canvia de Facultat.  
 
@@ -319,9 +372,15 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | :--------------: | :----------------: | :-------------- | :----------: |
 | 1                | EST12345           | Jordi Ferrer    | Engineering  |
 
-## SCD-2
+El que vol dir, tot plegat, és que, malgrat que hi hagi canvis, **cada vegada s'importen tots els registres de la taula transaccional (esborrant els que existien abans a la taula dimensional)**. Es a dir, els registres a la taula dimensional són els "**originals**" a la taula transaccional, sense canvis.
 
-La **_SCD-2_** **es sol utilitzar quan es requereix un anàlisi històric i la dimensió canvia relativament poc sovint**. Quan es produeixi algun canvi en els valors dels registres, s'afegirà una nova fila i s'hauran de completar les dades referides a l'historial de canvis.
+##### SCD-2
+
+**_SCD-2_** guarda la informació històrica al **_DWH_**.
+
+Quan hi ha un canvi es crea una nova entrada amb la seva data i **_SK_** apropiades.
+
+La **_SCD-2_** **es sol utilitzar quan es requereix un anàlisi històric i la dimensió canvia relativament poc sovint**. Quan es produeixi algun canvi en els valors dels registres, **s'afegirà una nova fila** i s'hauran de completar les dades referides a l'historial de canvis.
 
 Exemple: Imaginem el mateix exemple anterior però volem desar dades històriques.  
 
@@ -354,9 +413,11 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | 1                | EST12345           | Jordi Ferrer    | Marketing    | 01/01/2020     | 01/01/2020  | 1          | false      |
 | 2                | EST12345           | Jordi Ferrer    | Enginyeria   | 02/01/2020     |             | 2          | True       |
 
-## SCD-3
+##### SCD-3
 
-La **_SCD-3_** s'utilitza quan és important seguir els canvis d'atributs específics mentre es manté la simplicitat en el model de dades. Requereix que s'afegeixi a la taula de dimensió una columna addicional per cada columna els valors dels quals es vol mantenir un historial de canvis.
+**_SCD-3_** guarda la informació històrica al **_DWH_**.
+
+La **_SCD-3_** s'utilitza **quan és important seguir els canvis d'atributs específics mentre es manté la simplicitat en el model de dades**.**Requereix que s'afegeixi** a la taula de dimensió **una columna addicional** per cada columna els valors dels quals es vol mantenir un historial de canvis.
 
 Exemple: Imaginem el mateix exemple anterior però volem desar dades històriques. 
 
@@ -388,9 +449,11 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | :--------------: | :----------------: | :-------------- | :-----------------: | :---------------: |
 | 1                | EST12345           | Jordi Ferrer    | Marketing           | Enginyeria        |
 
-## SCD-4 (història separada)
+##### SCD-4 (història separada)
 
-La **_SCD-4_** fa servir "*taules históriques*", a on una taula conserva les dades actuals i addicionalment s'utilitza una taula per mantenir un registre d'alguns o tots els canvis. Les dues **_SK_** (**_taula de dimensió_** i **_taula històrica_**) fan referència a la **_taula de fets_** per millorar el rendiment de la consulta.
+**_SCD-4_** és coneix habitualment com a taules històriques. 
+
+La **_SCD-4_** fa servir "*taules históriques*", a on **una taula conserva les dades actuals i addicionalment s'utilitza una taula històrica** per mantenir un registre d'alguns o tots els canvis. Les dues **_SK_** (**_taula de dimensió_** i **_taula històrica_**) fan referència a la **_taula de fets_** per millorar el rendiment de la consulta.
 
 Per a l'exemple següent, el nom de la taula original (transaccional) és Proveïdor i la **_taula històrica_** és Proveïdor_Històric:
 
@@ -460,13 +523,40 @@ etc.
 
 Un repte que s'ens presente és quan la *mini-dimensió* comença a canviar ràpidament. Aleshores es poden introduir múltiples *mini-dimensions* per gestionar aquests escenaris. Si cap registre de fets ha d'associar la dimensió principal i la *mini-dimensió*, es pot utilitzar una **_taula de fets_** *sense fets* per associar la dimensió principal i la *mini-dimensió*.
 
-## SCD-5
+##### SCD-5
 
-La tècnica de tipus 5 es basa en la mini-dimensió de tipus 4 incrustant una clau de mini-dimensió del "perfil actual" a la dimensió base que es sobreescriu com a atribut de tipus 1. Aquest enfocament, anomenat tipus 5 perquè 4 + 1 és igual a 5, permet accedir als valors dels atributs de mini-dimensió assignats actualment juntament amb els altres de la dimensió base sense enllaçar-los mitjançant una taula de fets. Lògicament, normalment representem la dimensió base i l'estabilizador del perfil de minidimensió actual com una taula única a la capa de presentació. Els atributs dels estabilizadors haurien de tenir noms de columnes diferents, com ara "Nivell d'ingressos actual", per diferenciar-los dels atributs de la minidimensió vinculada a la taula de fets. L'equip d'ETL ha d'actualitzar/sobreescriure la referència de minidimensió tipus 1 sempre que la minidimensió actual canviï amb el temps.
+**_SCD-5_** es basa en la *mini-dimensió* **_SCD-4_** incrustant una clau de *mini-dimensió* del "*perfil actual*" a la dimensió base que es sobreescriu com a atribut **_SCD-1_**. Aquest enfocament, anomenat **_SCD-5_** perquè **4 + 1 = 5**, permet accedir als valors dels atributs de *mini-dimensió* assignats actualment conjuntament amb els altres de la dimensió base sense enllaçar-los mitjançant una **_taula de fets_**. Normalment representem la dimensió base i l'estabilizador del perfil de *mini-dimensió* actual com una taula única a la capa de presentació. Els atributs dels estabilizadors haurien de tenir noms de columnes diferents, com ara "Nivell d'ingressos actual", per diferenciar-los dels atributs de la *mini-dimensió* vinculada a la **_taula de fets_**. L'equip d'ETL ha d'actualitzar/sobreescriure la referència de *mini-dimensió* **_SCD-1_**, sempre que la *mini-dimensió* actual canviï amb el temps.
 
-## SCD-6
+Exemple:
 
-El SCD-6 combina els enfocaments dels tipus 1, 2 i 3 (1+2+3=6).
+Vendes (taula de fets)
+- Data (FK)
+- Client (FK)
+- Perfil (FK)
+...
+
+Clients (dimensió)
+- Client (PK)
+- Client ID (NK)
+- Nom
+...
+- Perfil actual (FK)
+
+Perfil (*mini-dimensió*)
+- Perfil (PK)
+- Franja edat
+- Puntuació de la freqüència de compres 
+- Nivell ingressos
+
+Vista de la *mini-dimensió* com estabilitzador
+- Perfil actual (PK)
+- Franja edat actual
+- Puntuació de la freqüència de compres actual
+- Nivell ingressos actual
+
+##### SCD-6 (híbrida)
+
+**_SCD-6_** combina els enfocaments dels tipus 1, 2 i 3 (**1+2+3=6**). Consisteix a considerar una **_SCD-1_** i afegir un parell de columnes addicionals que indiquen el rang temporal de validesa duna de les columnes de la taula. Si bé el disseny és complex, entre els seus beneficis podem destacar que **redueix la mida de les consultes temporals**. Hi ha una altra variant per a aquest tipus de dimensió, que consisteix a tenir versions del registre de la dimensió (numerats de 0 a n+1, on 0 sempre és la versió actual).
 
 **_Inscripció a la Facultat d'Astrofísica Blava_**
 
@@ -515,11 +605,11 @@ Taula de dimensió (després de l'ETL)
 | 2                | EST12345           | Jordi Ferrer    | Astrofísica verda   | Clima salat       | 19/08/2023     | 20/08/2023     | N                  |
 | 3                | EST12345           | Jordi Ferrer    | Clima salat         | Astrofísica verda | 20/08/2023     |                | Y                  |
 
-## SCD-7 (Híbrid: clau subrogada i natural)
+##### SCD-7 (Híbrid: clau subrogada i natural)
 
 Una implementació alternativa és col·locar tant la clau substituta com la clau natural a la **_taula de fets_**.   
 
-Aquest mètode permet enllaços més flexibles a la dimensió, fins i tot si s'ha utilitzat **_SCD-2_** en lloc de **_SCD-6_**.
+Aquest mètode **permet enllaços més flexibles a la dimensió**, fins i tot si s'ha utilitzat **_SCD-2_** en lloc de **_SCD-6_**.
 
 Amb la **_SCD-7_**, la **_taula de fets_** conté **_FKs_** dobles per a una dimensió determinada: una **_SK_** enllaçada a la taula de dimensions on es fan el seguiment dels atributs del tipus 2, més la clau natural duradora de la dimensió enllaçada a la fila actual de la dimensió tipus 2 per presentar el valor l'actual de l'atribut.
 
@@ -548,24 +638,93 @@ Productes actuals (**_taula de dimensió actual_**)
 - Descripció
 - ...
 
-## Resum SCD's
+##### Resum SCD's
 
-| Tipus SCD | Taula de dimensió                           | Taula de fets                                                  |
-| :-------: | :------------------------------------------ | :------------------------------------------------------------- |
-| SCD-0     | Sense canvis al valor de l'atribut          | Fets associats amb el valor original de l'atribut              |
-| SCD-1     | Sobreescriu l'atribut actualitzat           | Fets associats amb el valor actual de l'atribut                |
-| SCD-2     | Afegeix un nou registre amb el canvi (fila) | Fets associats amb el valor de l'atribut quan el fet occurreix |
-| SCD-3     | Afegeix un nou atribut (columna) "anterior" | Fets associats amb el valor de l'atribut anterior i actual     |
-| SCD-4     | Històric separat (*mini-dimensió*)          | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen |
-| SCD-5     | SCD-4 + SCD-1                               | Fets associats amb els valors ràpidament canviants dels atributs quan els fets occurreixen, a més dels canvis de valors ràpids de l'atributs actuals |
-| SCD-6     | SCD-1 + SCD-2 + SCD-3                       | Fets associats amb el valor de l'atribut quan el fet occurreix, més valors de l'atributs actuals |
-| SCD-7     | SCD-2 + una vista a les files actuals       | Fets associats amb el valor de l'atribut quan el fet occurreix, més valors de l'atributs actuals |
+| **_SCD_**   | Taula de dimensió                           | Taula de fets                                                                                                         |
+| :---------: | :------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------- |
+| **_SCD-0_** | Sense canvis al valor de l'atribut          | Els fets associats al valor original de l'atribut                                                                     |
+| **_SCD-1_** | Sobreescriu el valor de l'atribut           | Els fets associats amb el valor actual de l'atribut                                                                   |
+| **_SCD-2_** | Afegeix una nova fila amb el nou valor de l'atribut | Els fets associats amb el valor de l'atribut quan el fet occurreix                                            |
+| **_SCD-3_** | Afegeix una nova columna per preservar els valors de l'atribut anterior i actual | Fets associats amb el valor alternatiu de l'atribut (anterior i actual)          |
+| **_SCD-4_** | Afegeix una *mini-dimensió* que conté atributs que canvien ràpidament | Els fets associats a atributs que canvien ràpidament tenen efecte quan es produeix un fet |
+|**_ SCD-5_** | **_SCD-4_** + **_SCD-1_** = Afegeix la mini-dimensió (**_SCD-4_**), conjuntament amb la clau de **_SCD-1_** sobreescrita a la dimensió base | Els fets associats amb atributs que canvien ràpidament tenen efecte quan es va produir el fet, a més dels valors dels atributs actuals, que canvien ràpidament |
+| **_SCD-6_** | **_SCD-1_** + **_SCD-2_** +**_SCD-3_** = Afegeix atributs sobreescrits **_SCD-1_** a la fila de dimensions **_SCD-2_** i sobreescriu totes les files de dimensions anteriors | Els fets associats al valor de l'atribut quan es va produir el fet, més els valors actuals |
+| **_SCD-7_** | Afegeix una fila de dimensió **_SCD-2_** amb un valor d'atribut nou, a més de la visualització limitada a les files i/o els valors d'atribut actuals | Els fets associats amb el valor de l'atribut quan es va produir el fet, més els valors actuals |
 
-https://www.kimballgroup.com/2013/02/design-tip-152-slowly-changing-dimension-types-0-4-5-6-7/
+#### Dimensions que canvien ràpidament (Rapidly Changing Dimensions - RCD -)
 
-==> MODIFICAR SCD-5
+Són dimensions que canvien (o poden canviar) ràpidament amb el temps. Les **_RCD_** s'implementen generalment com a **_JUNKDIM_**.
 
-## Algunes de les pitjors pràctiques en treballar amb Dimensions
+La manipuplació de les **_RCD_** al **_DWH_** és molt difícil a causa del rendiment. Com hem vist, les **_SCD_** s'utilitzen per mantenir l'historial dels canvis. Però el problema amb **_SCD-2_** és que amb tots i cadascun dels canvis en l'atribut de dimensió, afegeix una nova fila a la taula. Si hi ha dimensions que canvien molt, la taula es fa més gran i pot causar greus problemes de rendiment. Per tant, l'ús de **_SCD-2_** pot no ser una bona decisió per implementar les dimensions que canvien ràpidament.
+
+Exemple:
+
+Considerem que a la dimensió Client tenim 1000 files. De mitjana, cada client canvia 10 d'atributs al any. Si utilitzem **_SCD-2_** per gestionar aquest escenari, hi haurà 1000*10 = 10000 files al final del any. Si la taula té milions de files, serà molt difícil gestionar la situació amb **_SCD-2_**. Per això farem servir un enfocament **_RCD_**.
+
+Per implementar-ho farem servir un atribut de canvi ràpid separat, mitjançant la implementació d'1 **_JUNKDIM_**.
+
+A la taula de fets no tots els atributs canvien ràpidament. Pot haver-hi algun atribut que pot canviar ràpidament i un altre no. La idea aquí és separar l'atribut que canvia ràpidament dels que canvien lentament i moure aquests atributs a una altra taula **_JUNKDIM_** i mantenir l'atribut que canvia lentament a la mateixa taula. D'aquesta manera, podem gestionar situacions d'augment de la mida de la taula.
+
+Client (**_taula de dimensió_**)
+- ID
+- Nom
+- Ciutat
+- Estat
+- Gènere
+- Ingressos
+- Valoració
+- Puntuació crèdit
+
+Atributs com ID, Nom, Ciutat, Estat o Gènere no canviaran o canvien molt poques vegades. En canvi, atributs com Ingressos, Valoració i Puntuació_crèdit canvien cada mes en funció de l'entorn del client. Per tant, hem de separar aquestes columnes de la taula de clients, en cas contrari, acabem omplint la taula si utilitzem **_SCD-2_** a la dimensió Client. Podem posar aquestes columnes que estan canviant ràpidament a la **_taula de dimensions JUNKDIM_**. 
+
+Client Junk (**_JUNKDIM_**)
+- SK
+- Ingressos
+- Valoració
+- Puntuació crèdit
+
+La dimensió Client resta com:
+
+Client (**_taula de dimensió_**)
+- ID
+- Nom
+- Ciutat
+- Estat
+- Gènere
+
+Ara bé, hem d'enllaçar la **_JUNKDIM_** (Client_Junk) i la **_taula de dimensió_** (Client). A més, no podem fer referència simplement a la **_JUNKDIM_** afegint la seva clau primària (**_SK_**) a Client com a **_FK_**. Com que qualsevol canvi fet a la **_JUNKDIM_** s'haurà de reflectir a la **_taula de dimensió_**, això òbviament augmenta les dades de Client. En lloc d'això, crearem una taula més de *mini-dimensió* que actua com a pont entre la **_taula de dimensió_** i **_JUNKDIM_**. També podem afegir columnes com ara la data d'inici i de finalització per fer un seguiment de l'historial de canvis.
+
+Client Mini Dim (**_Bridge Dimension - BRIDDIM-_**)
+- ID
+- SK
+- Data inici
+- Data final
+
+Les **_BRIDDIMs_** permeten definir relacions m:n entre **_taules de fets_**. Són necessàries per definir, per exemple, la relació entre un pilot i els seus múltiples patrocinadors (m:n).
+
+Aquesta taula és només un pont entre dues taules i no requereix cap **_SK_**.
+
+Un exemple de RCD, quan els creixements són explosius, són les Dimensions monstre (Monster Dimensions - **_MONSDIM_** -)
+
+#### Dimensions apilades (Stacked Dimensions - STACDIM -)
+
+**_STACDIM_** s'utilitza quan dues o més dimensions es combinen en una dimensió. Té un o dos atributs i sempre és **_SCD-0_**.
+
+Exemples (tipus i estat): Tipus de producte, Estat del client, Tipus de botiga, Tipus de seguretat, etc. Totes aquestes columnes haurien d'emmagatzemar-se a les seves dimensions respectives perquè són les propietats de la dimensió.
+
+Tot i això, hi ha columnes de tipus i estat que són propietat de la **_taula de fets_**, com ara: Tipus de transacció o Estat de transacció. **Per combinar el tipus de transacció i l'estat de la transacció en una dimensió, creem una dimensió brossa. No utilitzarem mai una STACDIM**.
+
+**No es recomana fer servir una STACDIM. Està malament fer-les servir, però existeixen**. Normalment perquè era així al sistema d'origen, de manera que simplement ho copiem al **_DWH_** (sense reflexionar).
+
+#### Dimensió diferida (Deferred Dimension - DEFEDIM -)
+
+Quan es carrega un registre d'1 **_taula de fets_**, és possible que un registre d'1 **_taula de dimensió_** encara no estigui preparat. Tècnicament s'anomena **_membre inferior_** o **_dimensió sensible_**.
+
+#### Dimensió distorsionada (Distorted Dimension - DISTDIM -)
+
+Una dimensió que s'utilitza en molts llocs s'anomena **_dimensió distorsionada - DISTDIM -_**. Es pot utilitzar en una sola BD o en varies, o en múltiples **_taules de fets_**, o en múltiples **_DM_** o **_DWH_**.
+
+## Algunes de les pitjors pràctiques en treballar amb Dimensions i Fets
 
 1. **No dissenyar al DWH la dimensió de Temps, esperant que la feina la faci l'eina de BI**.
 
@@ -583,7 +742,27 @@ https://www.kimballgroup.com/2013/02/design-tip-152-slowly-changing-dimension-ty
 
 8. **Si confies en els usuaris (Directors o Gerents), mancaran STATDIMs al teu DDM**.
 
-9. 
+9. **Considerar els canvis a les dimensions com SCD-0**
+
+10. **Considerar SCD-2 enlloc de contemplar possibles RCD**
+
+11. **Si ens surt cap STACDIM al DDM, aleshores ens hem equivocat en l'anàlisi dimensional**
+
+## Conclusions 
+
+Dissenyar les dimensions i els processos ETL és no més una part petita de la feina, però important.
+
+Per exemple, per maximitzar el rendiment, necessitarem un **mecanisme de captura de dades modificades** (**_CDC_**), que ens ens assegurari que **les dades es carreguin de forma incremental**.
+
+Als ETL complexos necessitarem actualitzacions freqüents segons les necessitats del negoci. **És possible que haguem d'afegir o eliminar camps, canviar certs tipus de dades, modificar el SCD aplicat a un camp, etc**. Fer aquests canvis a les consultes no només porta molt de temps sinó que també és extremadament propens a errors. **Abans que ens adonem, és possible que haguem fet malbé un pipeline existent en implementar un canvi menor en el mecanisme de càrrega**.
+
+Tot i això, encara sentirem que la major part del treball dur està fet. Però, **les empreses busquen constantment modernitzar i millorar els seus processos de dades**. Pot arribar el dia en què la nostra empresa decideixi canviar de plataforma d'emmagatzematge de dades. Suposem que han decidit passar d'1 BD on-premise a una plataforma al núvol.
+
+És a dir, **primer, hem de crear una nova arquitectura a la nova plataforma**, després, **reescriurem totes les consultes per configurar pipelines natives a les noves taules de destí**. 
+
+**L'impacte dels canvis pot ser tan gran que** possiblement haurem de fer tot el procés novament, des de zero!. Aleshores, **el nivell de complexitat involucrat pot esdevenir molt alt, fins i tot per als usuaris tècnics**. Imprescindible que aquests tècnics tinguin certificació (no necessariament universitaria, però si reconeguda) com a Analistes de Dades i/o Enginyers de Dades.
+
+**Conclusió: L'anàlisi i enginyeria implicats l'han de desenvolupar tècnics qualificats, dotats dels mitjans adequats i assesorats, en lo que al negoci es refereix, per usuaris prou qualificats i motivats**.
 
 ## T'ha interessat l'article?
 
@@ -607,9 +786,6 @@ Aquest projecte ha estat verificat per ortografia, sintaxi i contingut utilitzan
 
 Referència:  
 [OpenAI. (2023). ChatGPT (versió del 29 de setembre de 2023) \[Large Language Model\]](https://chat.openai.com/chat)
-
-
-
 
 
 

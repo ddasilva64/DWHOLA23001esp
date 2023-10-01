@@ -1,10 +1,135 @@
-# Dimensions
+# Dimensions i Fets - cat -
 
-Las dimensiones recogen los puntos de análisis de un hecho, es decir, son las preguntas que hacemos para conocer los hechos. 
+Per construir un **_dm_**, cal tenir en compte un conjunt de tècniques i conceptes per dissenyar el nostre **_DWH_**. Una part fonamental d'aquest és la tipologia de taules on desem les dades.
 
-Por ejemplo, una venta se puede analizar respecto al día de venta, producto, cliente, vendedor, canal de venta, etc. 
+- **_Taules de fets_**
+	- Allò que volem mesurar o analitzar.
+	- Són les taules principals del **_dm_**.
+	- Contenen claus foranes (**_FK_**) per relacionar-se amb les **_taules de dimensió_**.
+	- Contenen mètriques (també anomenades mesures), les quals representen allò que volem mesurar o analitzar.
+	- Generalment són valors numèrics.
+	- Eviten la redundància d'atributs a les **_taules de dimensions_**.
+	- Normalment tenen molts (milions) de registres.
+	- Exemples: Vendes, Compres, Moviments de Comptabilitat, Moviments de Magatzem, etc.
 
-Respecto a la gestión histórica de los datos, las **_tablas de dimensiones_** –**_SCD_**– se pueden clasificar de diferentes maneras:
+- **_Taules de dimensió_**
+	- Com volem mesurar allò que contenen les **_taules de fets_**.
+	- Són taules simples i normalitzades.
+	- Contenen claus primàries (**_PK_**) per relacionar-se amb les **_taules de fets_**.
+	- Els atributs són característiques de les **_taules de fets_**.
+	- No hi ha límit en el seu nombre al **_DWH_**.
+	- Poden contenir una o diverses relacions jeràrquiques.
+	- Tenen menys registres que les **_taules de fets_**.
+	- Exemples: Clients, Productes, Magatzems, Proveïdors, Calendari, etc.
+
+## Tipus d'Atributs
+
+- **_Jeràrquics_**: Permeten passar del general al particular, o consolidar i desagregar. Exemples: país, etc.
+- **_Descriptius_**: Informació rellevant que és purament descriptiva. Exemples: adreça, telèfon, mida, etc.
+- **_Control_**: Dades d'auditoria que no pertanyen al coneixement del negoci. Exemples: data d'enregistrament de la dada, etc.
+
+## Fets (fact tables)
+ 
+Són una representació dun procés de negoci. Pel que fa a disseny, permeten desar dos tipus d'atributs diferenciats:
+
+- Mesures del procés/activitat/flux de treball/esdeveniment que es pretén modelitzar.
+- **_FKs_** cap a registres en una **_taula de dimensió_** (vista de negoci).
+
+### Fets transaccionals (Transaction Fact Table - TFT -)
+
+Permeten analitzar les dades amb el màxim detall.
+
+Per exemple, en una venda que té com a resultat mètriques com a import d'aquesta.
+
+### Fets sense mesures (Factless Fact Tables/Coverage Table - FFT/CT -)
+
+Taules que no tenen mesures però tenen sentit, atès que representen el fet que succeeixi l'esdeveniment. Sovint s'afegeixen comptadors a aquestes taules per facilitar les consultes SQL.
+
+Per exemple, l'assistència a un acte benèfic en què per cada persona que hi assisteix tenim un registre però podríem no tenir cap mètrica associada més.
+
+### Fets periòdics (Periodic Snapshot Fact Table - PSFT -)
+
+Són usades per recollir informació a intervals de temps regulars. Depenent de la situació mesurada o de la necessitat de negoci, aquest tipus de **_taules de fet_** són una agregació de **_FFT/CT_** o estan dissenyades específicament.
+
+Per exemple, el Balanç mensual, en què les dades recullen acumulades de forma mensual.
+
+### Fets agregats (Accumulating Snapshot Fact Tables - ASFT -)
+
+Tepresenten el cicle de vida complet d'una activitat o procés, amb un principi i un final. Es caracteritzen per presentar múltiples dimensions relacionades
+amb els esdeveniments presents en un procés.
+
+Per exemple, un procés de matriculació d'un estudiant i que recopila dades durant el període de vida que solen substituir els anteriors (superació i recopilació
+d'assignatures, per exemple).
+
+### Fets X (casos de la vida real no descrits a la literatura)
+
+Són **_taules de fets_** que hem de construir en la vida real per afavorir-ne la usabilitat pels usuaris que les alimenten. A més, necessitem transformar-les perquè esdevinguin manejables al nostre **_dm_**.
+
+#### Taules de fets comprimides
+
+Imaginem el següent cas:
+
+Tenim una taula en un full de càlcul Excel al nostre servidor, el qual ha de ser mantingut per un Directiu de Ventes de l'empresa. Després d'1 procés **_ETL_**, integrarem aquesta taula amb les taules de la BD **_OLTP_** dins del nostre **_DWH_**.
+
+En aquesta taula s'anotarà el següent:
+- ID venedor (ha de ser el mateix que tenim a la BD **_OLTP_**).
+- Nom del venedor (el posem per afavorir la usabilitat de la taula).
+- Data d'inici (període).
+- Data final (període).
+- Incentius dineraris diaris no especificats (incentius en diners pel venedor individual, no contemplats a la BD **_OLTP_**).
+- Incentius en espècie diaris no especificats (incentius en espècie pel venedor individual, no contemplats a la BD **_OLTP_**).
+
+Per poder implementar aquesta **_taula de fets_** al nostre **_dm_**, haurem de tenir la mateixa granularitat entre les **_FKs_** de la nostra taula i les dimensions associades. La granularitat al nostre **_dm_** de la **_taula de dimensió_** de Temps és el **dia**, amb la qual cosa, haurem de transformar la nostra **_taula de fets_** perquè els seus registres siguin diaris (no periòdics).
+
+Observem que si transformem els períodes en dies (mantenint les dades de les altres columnes), no perdem informació. A aquest procés l'anomenarem **_descompressió de la taula de fets_**.
+
+La **_taula de fets_** (transformada), al nostre **_DWH_**, quedaria com segueix:
+- ID venedor.
+- Nom del venedor.
+- Data.
+- Incentius dineraris diaris no especificats.
+- Incentius en espècie diaris no especificats.
+
+#### Taules de fets normalitzades
+
+Imaginem el mateix cas, però amb una altra aproximació: No tenim **_DWH_**.
+
+A la taula, el Directiu anotarà el mateix que al cas anterior (la nostra solució serà transparent per a ell):
+- ID venedor (ha de ser el mateix que tenim a la nostra BD **_OLTP_**).
+- Nom del venedor (el posem per afavorir la usabilitat de la taula).
+- Data d'inici (període).
+- Data final (període).
+- Incentius dineraris diaris no especificats (incentius en diners pel venedor individual, no contemplats a la BD **_OLTP_**).
+- Incentius en espècie diaris no especificats (incentius en espècie pel venedor individual, no contemplats a la BD **_OLTP_**).
+
+Per poder implementar aquesta **_taula de fets_** al nostre **_dm_**, però ara sense tenir en compte el nivell de granularitat de la **_taula de dimensió_** de Temps, degut a que no podem implementar un **_DWH_**, haurem de transformar les files que repeteixin l'ID venedor en grups de repetició (no normalitzats).
+
+Observem que si realitzem aquesta transformació (evitable si tenim un **_DWH_**), haurem de comparar continuament el període amb la data per a saber si s'apliquen els fets per al mateix ID Venedor. És a dir, no es pot relacionar la **_taula de fets_** amb la **_taula de dimensió_** de Temps, però sí amb la dimensió de Venedors.
+
+La **_taula de fets_** (transformada), al nostre **_DWH_**, quedaria com segueix:
+- ID venedor.
+- Nom del venedor.
+- Període 1
+- Data d'inici (període).
+- Data final (període).
+- Incentius dineraris diaris no especificats.
+- Incentius en espècie diaris no especificats.
+...
+- Període n
+- Data d'inici (període).
+- Data final (període).
+- Incentius dineraris diaris no especificats.
+- Incentius en espècie diaris no especificats.
+
+**_Molt important!_**: **Com a Analistes/Enginyers de Dades, hem de requerir la implementació d'un DWH (sempre que sigui necessari)**.
+
+## Dimensions (dim tables)
+
+Les dimensions recullen els punts d'anàlisi d'1 fet, és a dir, són les preguntes que fem per conèixer els fets.
+
+Per exemple, una venda es pot analitzar respecte del dia de venda, producte, client, venedor, canal de venda, etc.
+
+Classificació de les **_taules de dimensió_**:
 
 - **_Dimensió de Temps_** (especial)
 - **_Classificació històrica_**
@@ -28,11 +153,11 @@ Respecto a la gestión histórica de los datos, las **_tablas de dimensiones_** 
 	- Dimensions degenerades (**_Degenerate Dimensions - DEGEDIM -_**)
 	- Dimensions estabilizadores (**_Outrigger Dimensions - OUTGDIM -_**)
 	- Dimensions estàtiques (**_Static Dimensions - STATDIM -_**)
-	- Dimensions apilades **_(Stacked Dimensions - STACDIM -_**)
+	- Dimensions apilades (**_Stacked Dimensions - STACDIM -_**)
 	- Dimensió diferida (**_Deferred Dimension - DEFEDIM -_**)
 	- Dimensió distorsionada (**_Distorted Dimension - DISTDIM -_**)
 
-## La dimensió Temps (Calendar DateTime Dimension - CDTD -)
+### La dimensió Temps (Calendar DateTime Dimension - CDTD -)
 
 En qualsevol **_DWH_**, es poden trobar diversos cubs amb les seves **_taules de fets_** amb registres amb variables d'interès pel negoci que han de ser estudiades. També, com s'ha comentat anteriorment, cada **_taula de fets_** estarà envoltada de diverses **_taules de dimensió_**, amb els paràmetres que ens permetran fer l'anàlisi dels fets que es volen estudiar. Un paràmetre que amb tota probabilitat tindrem a tots els cubs és el Temps, ja que l'habitual és emmagatzemar els fets a mesura que van succeint al llarg del temps, obtenint així una sèrie temporal de la variable a estudiar.
 
@@ -99,10 +224,6 @@ Amb les addicions descrites podríem tenir una taula de Temps com la de la figur
 
 <p><br></p>
 
-https://spa.myservername.com/dimensional-data-myodel-data-warehouse-tutorial-with-examples
-
-## Tipus de dimensions
-
 ### Dimensions reduïdes (Shrunken Dimensions - SHRKDIM -)
 
 Les **_SHRKDIMs_** ens donen quan tenim la necessitat de mostrar l'agregació de les dades que tenim a **_DWH_**. És a dir, necessitem mostrar una granularitat més alta que la que tenim a **_DWH_**.
@@ -111,9 +232,30 @@ Un exemple clàssic és quan necessitem mostrar dades mensuals, encara que tenim
 
 Un altre exemple, menys intuïtiu, seria considerar les Vendes per Ciutat. Aleshores crearíem una **_SHRKDIM_** de Ciutats que es relacionaria amb la **_taula de fets_** (Vendes).
 
-És a dir, les **_SHRKDIMs_** creen el que podríem assimilar a taules de cerca (a un model de BD transaccional). Al **_DDM_**, sempre, hem de pensar en quines preguntes hem de fer a la **_taula de fets_**, poder respondre a les necessitats del negoci (aquesta ha de ser la nostra lògica). Si no les podem respondre amb les **_taules de dimensions_** creades, potser crearem dimensions amb molt poques columnes (**reduïdes**), per respondre-les i aquestes seran les nostres **_SHRKDIMs_**.
+És a dir, les **_SHRKDIMs_** creen el que podríem assimilar a taules de cerca (a un model de BD **_OLTP_**). Al **_DDM_**, sempre, hem de pensar en quines preguntes hem de fer a la **_taula de fets_**, poder respondre a les necessitats del negoci (aquesta ha de ser la nostra lògica). Si no les podem respondre amb les **_taules de dimensions_** creades, potser crearem dimensions amb molt poques columnes (**reduïdes**), per respondre-les i aquestes seran les nostres **_SHRKDIMs_**.
 
 **_Nota important_**: Algunes eines de **_BI_**, com **_Power BI_**, tenen la possibilitat de crear segmentacions de **_taules de fets_**, sense extreure **_SHRKDIMs_** de la mateixa. Això ens pot donar com a resultat un **_DDM_** incomplet al **_DWH_**, sobretot si decidim explotar les dades en un altre entorn, com **_Python_** (fora de **_Power BI_**).
+
+#### Exemple d'Ús de Dimensions Reduïdes (SHRKDIM)
+
+Suposem que tenim un **_DWH_** que emmagatzema dades de Vendes per a una cadena de botigues. En aquest **_DWH_**, tenim una **_taula de fets_** principal anomenada "Vendes" que emmagatzema informació detallada sobre cada venda individual, com la data de la venda, el producte venut, la quantitat, el preu, etc.
+
+No obstant això, també tenim la necessitat de realitzar anàlisis a nivell mensual i a nivell de ciutat. Això significa que necessitem mostrar dades agregades de Vendes per Mes i per Ciutat, tot i que les dades detallades s'emmagatzemen a nivell diari a la **_taula de fets_** "Vendes".
+
+En aquest escenari, podríem crear dues dimensions reduïdes (**_SHRKDIM_**):
+
+1. **Dimensió de Mes (SHRKDIM_Mes)**: Aquesta dimensió contindria informació sobre els mesos, com el nom del mes, el número del mes i qualsevol altra informació rellevant. Seria una taula reduïda en comparació amb la **_taula de fets_** de "Vendes" i es relacionaria amb ella a través de la data de la venda. Això ens permetria realitzar anàlisis i consultes a nivell mensual.
+
+2. **Dimensió de Ciutat (SHRKDIM_Ciutat)**: Aquesta dimensió contindria informació sobre les ciutats on operen les botigues, com el nom de la ciutat, el codi postal i altres detalls. Igual que la dimensió de Mes, seria una taula reduïda en comparació amb la **_taula de fets_** de "Vendes" i es relacionaria amb ella a través de la ubicació de la botiga. Això ens permetria realitzar anàlisis i consultes a nivell de ciutat.
+
+Amb aquestes dimensions reduïdes en lloc, podríem respondre preguntes com:
+
+- **"Quina va ser la quantitat total de vendes al mes de juliol de 2023 a totes les ciutats?"**
+- **"Quin va ser el promig de vendes diàries a la ciutat de Barcelona a l'últim trimestre?"**
+
+Aquestes preguntes impliquen agregacions a nivell de Mes i Ciutat, i les dimensions reduïdes ens permeten realitzar aquestes consultes de manera eficient i coherent, fins i tot si les dades detallades s'emmagatzemen a nivell diari a la **_taula de fets_** "Vendes".
+
+<p><br></p>
 
 ### Dimensions conformades (Conformed Dimensions - CONFDIM -)
 
@@ -126,6 +268,30 @@ Es pot fer referència a una **_CONFDIM_** mitjançant múltiples **_taules de f
 L'exemple més clàssic de **_CONFDIM_** és la taula de Temps, ja que podem preguntar per les Vendes mensuals, les Planificacions de productivitat dels empleats al més que vé o les Entrades al magatzem el dia 15 del mes passat. En tots els casos, inclús si es tracta d'1 altre **_DM_** (departamental), es tracta de preguntes que fem des de la nostra taula de Temps (**_taula de dimensió_**) a diferents **_taules de fets_** (a un o més **_DM_**, cas que els tinguem contemplats al nostre **_DWH_**).
 
 **_Atenció!_**: Si no hem fet les preguntes de negoci adeqüades, no contemplarem dimensions, que si són prou generalitzades al nostre **_DWH_**, seran **_CONFDIMs_** no contemplades.
+
+#### Exemple d'ús de Dimensions Conformades (CONFDIM) amb Data Marts
+
+Imaginem que tenim un gran Data Warehouse (**_DWH_**) que emmagatzema dades per a una empresa minorista. Dins d'aquest **_DWH_**, hi ha diversos Data Marts (**_DMs_**) per a diferents departaments, com ara Vendes, Màrqueting i Gestió d'Estocs. Cada **_DM_** es centra en aspectes comercials específics i té les seves pròpies **_taules de fets_**.
+
+Considerem el **_DM_** de Vendes, que conté informació detallada de les vendes. Una de les **_taules de fets_** principals en aquest **_DM_** és "Transaccions de Vendes", que registra les dades de cada venda individual, incloent el producte venut, la informació del client, la data i l'import.
+
+Ara bé, el **_DM_** de Màrqueting està interessat a analitzar les dades de les vendes per comprendre el comportament i les tendències dels clients. Volen saber, per exemple, quins productes solen ser comprats junts pels clients. Per fer-ho, necessiten compartir dades de dimensions, com ara Producte i Client, amb el **_DM_** de Vendes.
+
+Així és com s'utilitzen les **_Dimensions Conformades (CONFDIM)_** en aquest escenari:
+
+1. **Dimensió de Producte (CONFDIM_Producte)**: Aquesta dimensió conté informació sobre els productes, com ara el nom del producte, la categoria i el fabricant. Es manté de manera consistent tant en el **_DM_** de Vendes com en el **_DM_** de Màrqueting. El **_DM_** de Vendes relaciona la **_taula de fets_** "Transaccions de Vendes" amb aquesta dimensió, mentre que el **_DM_** de Màrqueting utilitza la mateixa dimensió per analitzar dades relacionades amb els productes.
+
+2. **Dimensió de Client (CONFDIM_Client)**: Aquesta dimensió inclou informació sobre el client, com ara el nom, l'adreça i els detalls de contacte. Igual que la Dimensió de Producte, es comparteix entre els **_DMs_** de Vendes i Màrqueting. El **_DM_** de Vendes vincula la **_taula de fets_** "Transaccions de Vendes" amb aquesta dimensió, mentre que el **_DM_** de Màrqueting l'utilitza per comprendre les preferències i el comportament dels clients.
+
+Amb les **_Dimensions Conformades (CONFDIM)_** en el seu lloc, el **_DM_** de Màrqueting pot realitzar anàlisis com identificar l'afinitat entre productes i segmentar clients de manera efectiva, ja que poden confiar en dades de dimensions consistents compartides amb el **_DM_** de Vendes.
+
+Consulta d'exemple en el **_DM_** de Màrqueting:
+
+- **"Quins productes es compren sovint junts i quins segments de clients mostren aquest comportament?"**
+
+Aprofitant les **_Dimensions Conformades (CONFDIM)_**, aquests **_DMs_** asseguren la consistència i la integritat de les dades en compartir informació de dimensions, permetent a diferents departaments dins de l'organització realitzar anàlisis interfuncionals i obtenir coneixements valuosos.
+
+<p><br></p>
 
 ### Dimensions brossa (Junk Dimensions - JUNKDIM -)
 
@@ -153,6 +319,29 @@ _Amb JUNKDIM_
 
 **_Nota_**: És com a mínim una pràctica qüestionable, atés que ens interesa des normalitzar les dimensions i dotar de significat les mètriques de les **_taules de fets_**. Al cas esposat, la pràctica més recomenada seria considerar els Cotxes com a **_taula de dimensió_** d'1 **_taula de fets_** de Vendes i llestos.
 
+#### Exemple d'ús de dimensions brossa (Junk Dimensions - JUNKDIM)
+
+Suposem que tenim un Data Warehouse (**_DWH_**) que emmagatzema dades de Vendes de productes. En aquest **_DWH_**, tenim una **_taula de fets_** principal anomenada "Vendes" que emmagatzema informació detallada sobre cada transacció, com ara data, producte venut, client, quantitat, preu, entre d'altres.
+
+Ara, necessitem realitzar anàlisis específics que involucren la combinació de certs atributs de baixa cardinalitat, com ara els colors dels productes i les característiques del producte. Aquests atributs no justifiquen una dimensió independent a causa de la seva baixa cardinalitat i naturalesa volàtil.
+
+En lloc de crear dimensions separades pels colors i les característiques del producte, podríem optar per una **_dimensió brossa (JUNKDIM)_** anomenada "Atributs del Producte". Aquesta dimensió contindria una col·lecció de codis aleatoris o indicadors que representen combinacions de colors i característiques.
+
+Així és com es veuria l'estructura de dades:
+
+- **_Taula de fets_** "Vendes": Es relaciona amb la **_JUNKDIM_** "Atributs del Producte" mitjançant una **_FK_**.
+
+- **_JUNKDIM_** "Atributs del Producte": Conté combinacions de colors i característiques representades per codis o indicadors.
+
+Amb aquesta estructura, podríem respondre preguntes com ara:
+
+- **"Quina és la quantitat total de Productes venuts que tenen les característiques 'Vermell' i 'Resistent a l'aigua'?"**
+- **"Quin és el preu mitjà dels Productes de color 'Blau'?"**
+
+Les **_JUNKDIMs_** ens permeten simplificar el **_dm_** i optimitzar l'espai, ja que no hauríem de crear dimensions separades per a cada combinació possible de colors i característiques del producte.
+
+<p><br></p>
+
 ### Dimensions de joc de rol (Role-playing dimensions - RPLYDIM -)
 
 Les **_RPLYDIMs_** tenen assignat un significat. És a dir, una **_RPLYDIM_** és una dimensió que fa referència a múltiples propòsits dins d'1 **_taula de fets_**.
@@ -167,7 +356,7 @@ Dificultat de tractament:
 
 3. Poden ser difícils de mantenir i actualitzar, ja que qualsevol canvi a la **_taula de dimensions_** font pot afectar a múltiples **_RPLYDIMs_** i **_taules de fets_**. És imprescindible, doncs tenir-les molt clares a tot el **_pipeline_**.  
 
-4. A algunes eines de **_BI_**, com ara **_Power BI_**, **no més permet tenir activa** una relació amb la mateixa **_PK_** de la RPLYDIM, malgrat que siguin **_FKs_** diferents a la **_taula de fets_**. Això no més es un tema d'implementacio al **_BI_** i es resol correctament a l'eina (a **_Power BI_**, amb **_DAX_**).  
+4. Algunes eines de **_BI_**, com ara **_Power BI_**, **no més permet tenir activa** una relació amb la mateixa **_PK_** de la RPLYDIM, malgrat que siguin **_FKs_** diferents a la **_taula de fets_**. Això no més es un tema d'implementacio al **_BI_** i es resol correctament a l'eina (a **_Power BI_**, amb **_DAX_**).  
 
 Aquesta seria una bona solució de **_RPLYDIMs_** a **_Power BI_** amb **_DAX_**:
 
@@ -187,9 +376,60 @@ Aquesta seria una bona solució de **_RPLYDIMs_** a **_Power BI_** amb **_DAX_**
 
 etc.
 
-Altres solucions, ens poden complicar la vida com muntar diferents vistes (al nostre **_DWH_**) de la taula de dimensió Temps per cadascuna de les Fks de la taula de fets, es a dir, per cadascuna de les **_RPLYDIMs_** definides. Això ens complica extraoRPLYDIMinàriament les relacions i les segmentacions en l'explotació del **_DDM_** al **_BI_** (p.e.).
+Altres solucions, ens poden complicar la vida com muntar diferents vistes (al nostre **_DWH_**) de la **_taula de dimensió_** Temps per cadascuna de les **_FKs_** de la **_taula de fets_**, es a dir, per cadascuna de les **_RPLYDIMs_** definides. Això ens complica extraordinàriament les relacions i les segmentacions en l'explotació del **_DDM_** al **_BI_** (p.e.).
 
-**_Atenció!_**: És imprescindible definir bé les **_RPLYDIMs_** per que funcioni bé el nostre **_pipeline_**. Això implica que, com a **Enginyers de Dades** **hem de conèixer**, al **_pipeline_** del nostre projecte, **des del negoci del client fins la solució final** en que mostrarem el resultat.
+**_Atenció!_**: És imprescindible definir bé les **_RPLYDIMs_** per que funcioni bé el nostre **_pipeline_**. Això implica que, com a **Enginyers de Dades hem de conèixer**, al **_pipeline_** del nostre projecte, **des del negoci del client fins la solució final** en que mostrarem el resultat.
+
+#### Exemple d'ús de dimensions de joc de rol (Role-playing dimensions - RPLYDIM -)
+
+Suposem que tenim un Data Warehouse (**_DWH_**) que emmagatzema dades de Vendes de productes. En aquest **_DWH_**, tenim una **_taula de fets_** principal anomenada "Vendes" que emmagatzema informació detallada sobre cada transacció, com la data de comanda, la data d'enviament, la data de lliurament, el producte venut, el client, la quantitat, el preu, entre altres.
+
+A més, volem implementar la solució a **_Power BI_**.
+
+Ara, necessitem realitzar anàlisis específics que involucren els atributs de temps. Cadascun d'aquests atributs té una relació amb la dimensió de Temps.
+
+En lloc de crear dimensions separades per a les dates, podríem optar per una **_dimensió de joc de rol (RPLYDIM)_** i a més no necessitaríem una taula diferent de la **_taula de dimensió_** de Temps. 
+
+Dificultats en el tractament:
+
+1. A **_Power BI_** no podem mantenir més d'una relació amb el mateix camp, amb la qual cosa necessitem implementar la relació selectivament en DAX, segons els interessos.
+
+2. En altres sistemes, la implementació pot implicar crear múltiples **_taules de dimensió_** de Temps, per a cada atribut de la **_taula de fets_** amb la qual vulguem establir la relació.
+
+En el nostre cas, depenent de la mètrica que vulguem obtenir, utilitzaríem codis com els següents:
+
+````DAX
+[Vendes totals per data de comanda] :=   
+    CALCULATE( 
+        SUM(Comandes[Total de línia]),
+        USERELATIONSHIP(Comandes[Data de comanda], Dates[Data])
+    )
+
+[Vendes totals per data d'enviament] := 
+    CALCULATE( 
+        SUM(Comandes[Total de línia]),
+        USERELATIONSHIP(Comandes[Data d'enviament], Dates[Data])
+    )
+
+[Vendes totals per data de lliurament] := 
+    CALCULATE( 
+        SUM(Comandes[Total de línia]),
+        USERELATIONSHIP(Comandes[Data de lliurament], Dates[Data])
+    )
+````
+
+Així és com es veuria l'estructura de dades:
+
+- **_Taula de fets_** "Vendes": Es relaciona amb la **_RPLYDIM_** "Dates" a través de les 3 **_FKs_**.
+
+- **_RPLYDIM_** "Atributs de Temps": En el nostre cas és la **_taula de dimensió_** de Temps.
+
+Amb aquesta estructura, podríem respondre preguntes com:
+
+- **"Quina és la quantitat total de Productes venuts que es van enviar al mes de març?"**
+- **"En quines ciutats es van fer més lliuraments a l'agost?"**
+
+Les **_JUNKDIMs_** ens permeten simplificar el **_dm_** i optimitzar l'espai, ja que no hauríem de crear dimensions separades per a cada atribut relacionat (**_FK_**).
 
 ### Dimensions degenerades (Degenerate Dimensions - DEGEDIM -)
 
@@ -205,7 +445,7 @@ Una **_DEGEDIM_** és una part de la **_taula de fets_**, que no és una mesura,
 
 **_Avís!_**: Definir **_DEGEDIMs_** fora d'1 **_taula de fets_** és un error.
 
-## Dimensions estabilizadores (Outrigger Dimensions - OUTGDIM -)
+#### Dimensions estabilizadores (Outrigger Dimensions - OUTGDIM -)
 
 Dimensions que fan referència a altres dimensions mitjançant claus externes (subdimensions). 
 
@@ -228,7 +468,7 @@ El segon model està des normalitzat i és una millor solució a un **_DDM_**.
 
 **_Avís!_**: Hem d'intentar evitar les **_OUTGDIM_** al nostre **_DDM_**.
 
-## Dimensions estàtiques (Static Dimensions - STATDIM -)
+#### Dimensions estàtiques (Static Dimensions - STATDIM -)
 
 Venen del no-res, són dimensions que no existeixen la BD **_OLTP_** d'origen, com a entitats.  
 
@@ -242,7 +482,7 @@ Una dimensió que no existeix a la **_OLTP_**, no necessàriament han de ser una
 
 **_Avís!_**: No hem de confiar en els usuaris (Directors o Gerents), si manquen entitats a la BD **_OLTP_** (que es transformaran en dimensions al **_DDM_**), hem d'afegir-les, abans del **_DWH_** i s'han de relacionar al **_DWH_**.
 
-## Dimensions que canvien lentament (Slowly Changing Dimensions - SCD -)
+#### Dimensions que canvien lentament (Slowly Changing Dimensions - SCD -)
 
 Una **_SCD_** a un **_DWH_** és una dimensió que conté dades relativament estàtiques que poden canviar lentament i de manera imprevisible, en lloc de seguir un horari regular. Alguns exemples de dimensions típiques que canvien lentament són entitats com Localitzacions Geogràfiques, Clients o Noms de Productes. ([Wikipedia](https://en.wikipedia.org/wiki/Slowly_changing_dimension)).  
 
@@ -253,25 +493,19 @@ _Dimensió (imatge 001)_
 
 <p><br></p>
 
-### Tipus d'atributs
-
-- **_Jeràrquics_**: Permeten passar del general al particular, o consolidar i desagregar. Per exemple: país.
-- **_Descriptius_**: Informació rellevant, que és purament descriptiva. Per exemple: adreça, telèfon, mida, clima.
-- **_Control_**: Dades d'auditoria, que no pertanyen al coneixement del negoci. Per exemple: la data d'enregistrament de la dada.
-
-### Tipus de SDC
+##### Tipus de SDC
 
 A una BD dimensional, els **_SCDs_** són aquelles dimensions que canvien amb el temps, però no necessàriament de manera constant o previsible. **Per exemple, a una taula de dades de Clients, l'adreça del client pot canviar amb el temps, però no tots els clients canvien l'adreça a la mateixa velocitat. Alguns clients poden canviar l'adreça cada mes, mentre que altres poden mantenir la mateixa adreça durant anys**.
 
 La gestió adequada de les **_SCD_** és important per mantenir l'exactitud i la integritat de les dades dimensionals en una base de dades, ja que permet als usuaris realitzar anàlisis històriques i comparar dades al llarg del temps.
 
-#### Elecció del tipus de SCD
+##### Elecció del tipus de SCD
 
 La elecció del tipus de **_SCD_** a utilitzar depèn de les necessitats específiques del **_DWH_** i les necessitats d'anàlisi. És important tenir en compte factors com la importància de les dades històriques, la freqüència dels canvis a les dimensions i les implicacions d'emmagatzematge i rendiment de cada enfocament.
 
 Les **_SCDs_** són un aspecte crucial dels **_DWHs_** ja que permeten representar les dades al llarg del temps, facilitant així un anàlisi i informes històrics precisos.
 
-## SDC-0
+##### SDC-0
 
 **_SCD-0_** no té en compte la gestió dels canvis històrics. S'aplica quan no es canvia mai la informació, es dir, els atributs al **_SCD-0_** mai canvien i s'assignen a atributs que tenen **valors** duradors o que es descriuen com a "**originals**".  
 
@@ -281,7 +515,7 @@ S'aplica a la majoria dels atributs de les dimensions.
 
 El que vol dir, tot plegat, és que, **com que a la taula original no hi ha canvis, aleshores tampoc n'hi ha en la dimensió**.
 
-## SCD-1
+##### SCD-1
 
 **_SCD-1_** no guarda històrics. La nova informació sobreescriu l'antiga sempre. Principalment la sobreescriptura es fa per errors de qualitat de dades. Aquest tipus de dimensions és fàcil de mantenir i es fa servir quan la informació històrica no és important. És a dir, **és apropiat quan les dades històriques no són importants o quan es poden recuperar d'altres fonts**.  
 
@@ -317,7 +551,7 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 
 El que vol dir, tot plegat, és que, malgrat que hi hagi canvis, **cada vegada s'importen tots els registres de la taula transaccional (esborrant els que existien abans a la taula dimensional)**. Es a dir, els registres a la taula dimensional són els "**originals**" a la taula transaccional, sense canvis.
 
-## SCD-2
+##### SCD-2
 
 **_SCD-2_** guarda la informació històrica al **_DWH_**.
 
@@ -356,7 +590,7 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | 1                | EST12345           | Jordi Ferrer    | Marketing    | 01/01/2020     | 01/01/2020  | 1          | false      |
 | 2                | EST12345           | Jordi Ferrer    | Enginyeria   | 02/01/2020     |             | 2          | True       |
 
-## SCD-3
+##### SCD-3
 
 **_SCD-3_** guarda la informació històrica al **_DWH_**.
 
@@ -392,7 +626,7 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | :--------------: | :----------------: | :-------------- | :-----------------: | :---------------: |
 | 1                | EST12345           | Jordi Ferrer    | Marketing           | Enginyeria        |
 
-## SCD-4 (història separada)
+##### SCD-4 (història separada)
 
 **_SCD-4_** és coneix habitualment com a taules històriques. 
 
@@ -466,7 +700,7 @@ etc.
 
 Un repte que s'ens presente és quan la *mini-dimensió* comença a canviar ràpidament. Aleshores es poden introduir múltiples *mini-dimensions* per gestionar aquests escenaris. Si cap registre de fets ha d'associar la dimensió principal i la *mini-dimensió*, es pot utilitzar una **_taula de fets_** *sense fets* per associar la dimensió principal i la *mini-dimensió*.
 
-## SCD-5
+##### SCD-5
 
 **_SCD-5_** es basa en la *mini-dimensió* **_SCD-4_** incrustant una clau de *mini-dimensió* del "*perfil actual*" a la dimensió base que es sobreescriu com a atribut **_SCD-1_**. Aquest enfocament, anomenat **_SCD-5_** perquè **4 + 1 = 5**, permet accedir als valors dels atributs de *mini-dimensió* assignats actualment conjuntament amb els altres de la dimensió base sense enllaçar-los mitjançant una **_taula de fets_**. Normalment representem la dimensió base i l'estabilizador del perfil de *mini-dimensió* actual com una taula única a la capa de presentació. Els atributs dels estabilizadors haurien de tenir noms de columnes diferents, com ara "Nivell d'ingressos actual", per diferenciar-los dels atributs de la *mini-dimensió* vinculada a la **_taula de fets_**. L'equip d'ETL ha d'actualitzar/sobreescriure la referència de *mini-dimensió* **_SCD-1_**, sempre que la *mini-dimensió* actual canviï amb el temps.
 
@@ -497,7 +731,7 @@ Vista de la *mini-dimensió* com estabilitzador
 - Puntuació de la freqüència de compres actual
 - Nivell ingressos actual
 
-## SCD-6 (híbrida)
+##### SCD-6 (híbrida)
 
 **_SCD-6_** combina els enfocaments dels tipus 1, 2 i 3 (**1+2+3=6**). Consisteix a considerar una **_SCD-1_** i afegir un parell de columnes addicionals que indiquen el rang temporal de validesa duna de les columnes de la taula. Si bé el disseny és complex, entre els seus beneficis podem destacar que **redueix la mida de les consultes temporals**. Hi ha una altra variant per a aquest tipus de dimensió, que consisteix a tenir versions del registre de la dimensió (numerats de 0 a n+1, on 0 sempre és la versió actual).
 
@@ -548,7 +782,7 @@ Taula de dimensió (després de l'ETL)
 | 2                | EST12345           | Jordi Ferrer    | Astrofísica verda   | Clima salat       | 19/08/2023     | 20/08/2023     | N                  |
 | 3                | EST12345           | Jordi Ferrer    | Clima salat         | Astrofísica verda | 20/08/2023     |                | Y                  |
 
-## SCD-7 (Híbrid: clau subrogada i natural)
+##### SCD-7 (Híbrid: clau subrogada i natural)
 
 Una implementació alternativa és col·locar tant la clau substituta com la clau natural a la **_taula de fets_**.   
 
@@ -581,7 +815,7 @@ Productes actuals (**_taula de dimensió actual_**)
 - Descripció
 - ...
 
-## Resum SCD's
+##### Resum SCD's
 
 | **_SCD_**   | Taula de dimensió                           | Taula de fets                                                                                                         |
 | :---------: | :------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------- |
@@ -594,7 +828,7 @@ Productes actuals (**_taula de dimensió actual_**)
 | **_SCD-6_** | **_SCD-1_** + **_SCD-2_** +**_SCD-3_** = Afegeix atributs sobreescrits **_SCD-1_** a la fila de dimensions **_SCD-2_** i sobreescriu totes les files de dimensions anteriors | Els fets associats al valor de l'atribut quan es va produir el fet, més els valors actuals |
 | **_SCD-7_** | Afegeix una fila de dimensió **_SCD-2_** amb un valor d'atribut nou, a més de la visualització limitada a les files i/o els valors d'atribut actuals | Els fets associats amb el valor de l'atribut quan es va produir el fet, més els valors actuals |
 
-## Dimensions que canvien ràpidament (Rapidly Changing Dimensions - RCD -)
+#### Dimensions que canvien ràpidament (Rapidly Changing Dimensions - RCD -)
 
 Són dimensions que canvien (o poden canviar) ràpidament amb el temps. Les **_RCD_** s'implementen generalment com a **_JUNKDIM_**.
 
@@ -649,7 +883,7 @@ Aquesta taula és només un pont entre dues taules i no requereix cap **_SK_**.
 
 Un exemple de RCD, quan els creixements són explosius, són les Dimensions monstre (Monster Dimensions - **_MONSDIM_** -)
 
-## Dimensions apilades (Stacked Dimensions - STACDIM -)
+#### Dimensions apilades (Stacked Dimensions - STACDIM -)
 
 **_STACDIM_** s'utilitza quan dues o més dimensions es combinen en una dimensió. Té un o dos atributs i sempre és **_SCD-0_**.
 
@@ -659,20 +893,15 @@ Tot i això, hi ha columnes de tipus i estat que són propietat de la **_taula d
 
 **No es recomana fer servir una STACDIM. Està malament fer-les servir, però existeixen**. Normalment perquè era així al sistema d'origen, de manera que simplement ho copiem al **_DWH_** (sense reflexionar).
 
-## Dimensió diferida (Deferred Dimension - DEFEDIM -)
+#### Dimensió diferida (Deferred Dimension - DEFEDIM -)
 
 Quan es carrega un registre d'1 **_taula de fets_**, és possible que un registre d'1 **_taula de dimensió_** encara no estigui preparat. Tècnicament s'anomena **_membre inferior_** o **_dimensió sensible_**.
 
-## Dimensió distorsionada (Distorted Dimension - DISTDIM -)
+#### Dimensió distorsionada (Distorted Dimension - DISTDIM -)
 
 Una dimensió que s'utilitza en molts llocs s'anomena **_dimensió distorsionada - DISTDIM -_**. Es pot utilitzar en una sola BD o en varies, o en múltiples **_taules de fets_**, o en múltiples **_DM_** o **_DWH_**.
 
-https://www.itprotoday.com/sql-server/data-warehousing-rapidly-changing-monster-dimensions
-https://dylanwan.wordpress.com/data-warehouse-design/use-minidimension-to-handle-the-rapidly-changing-monster-dimension/
-https://www.di.uminho.pt/~prh/uce15-0809/g41.pdf
-https://phanikumaryadavilli.medium.com/navigating-the-storm-taming-rapidly-changing-dimensions-in-data-management-ab8b20ecbe9e
-
-## Algunes de les pitjors pràctiques en treballar amb Dimensions
+## Algunes de les pitjors pràctiques en treballar amb Dimensions i Fets
 
 1. **No dissenyar al DWH la dimensió de Temps, esperant que la feina la faci l'eina de BI**.
 

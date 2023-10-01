@@ -326,7 +326,7 @@ Supongamos que tenemos un Data Warehouse (**_DWH_**) que almacena datos de Venta
 
 Ahora, necesitamos realizar análisis específicos que involucran la combinación de ciertos atributos de baja cardinalidad, como los colores de los productos y las características del producto. Estos atributos no justifican una dimensión independiente debido a su baja cardinalidad y naturaleza volátil.
 
-En lugar de crear dimensiones separadas para los colores y las características del producto, podríamos optar por una **_dimensión de desecho (JUNKDIM)_** llamada "Atributos de Producto". Esta dimensión contendría una colección de códigos aleatorios o flags que representan combinaciones de colores y características.
+En lugar de crear dimensiones separadas para los colores y las características del producto, podríamos optar por una **_dimensión basura (JUNKDIM)_** llamada "Atributos de Producto". Esta dimensión contendría una colección de códigos aleatorios o flags que representan combinaciones de colores y características.
 
 Así es como se vería la estructura de datos:
 
@@ -380,5 +380,57 @@ etc.
 Otras soluciones pueden complicarnos la vida al crear diferentes vistas (en nuestro **_DWH_**) de la **_tabla de dimensión_** de Tiempo para cada una de las **_FKs_** de la **_tabla de hechos_**, es decir, para cada una de las **_RPLYDIMs_** definidas. Esto complica extraordinariamente las relaciones y las segmentaciones en la explotación del **_DDM_** en el **_BI_** (por ejemplo).
 
 **_¡Atención!_**: Es imprescindible definir bien las **_RPLYDIMs_** para que funcione correctamente nuestro pipeline. Esto implica que, como **Ingenieros de Datos, debemos conocer**, en el **_pipeline_** de nuestro proyecto, **desde el negocio del cliente hasta la solución final** en la que mostraremos el resultado.
+
+#### Ejemplo de uso de dimensiones de juego de rol (Role-playing dimensions - RPLYDIM -)
+
+Supongamos que tenemos un Data Warehouse (**_DWH_**) que almacena datos de Ventas de productos. En este **_DWH_**, tenemos una **_tabla de hechos_** principal llamada "Ventas" que almacena información detallada sobre cada transacción, como fecha de pedido, fecha de envío, fecha de entrega, producto vendido, cliente, cantidad, precio, entre otros.
+
+Además, queremos implementar la solución en **_Power BI_**.
+
+Ahora, necesitamos realizar análisis específicos que involucran los atributos de tiempo. Cada uno de estos atributos tienen una relación con la dimensión de Tiempo.
+
+En lugar de crear dimensiones separadas para las fechas, podríamos optar por una **_dimensión de juego de rol (RPLYDIM)_** y además no necesitaríamos una tabla distinta de la **_tabla de dimensión_** de Tiempo. 
+
+Dificultades en el tratamiento:
+
+1. En **_Power BI_** no podemos mantener más de una relación con el mismo campo, con lo cual necesitamos implementar la relación selectívamente en DAX, según los interese.
+
+2. En otros sistemas, la implementación puede implicar crear múltiples **_tablas de dimensión_** de Tiempo, para cada atributo de la **_tabla de hechos_** con la que queramos establecer la relación.
+
+En nuestro caso, dependiendo de la métrica que queramos obtener usaríamos códigos como los siguientes:
+
+````DAX
+[Ventas totales por fecha de pedido] :=   
+    CALCULATE( 
+        SUM(Pedidos[Total de línea]),
+        USERELATIONSHIP(Pedidos[Fecha de pedido], Fechas[Fecha])
+    )
+
+[Ventas totales por fecha de envío] := 
+    CALCULATE( 
+        SUM(Pedidos[Total de línea]),
+        USERELATIONSHIP(Pedidos[Fecha de envío], Fechas[Fecha])
+    )
+
+[Ventas totales por fecha de entrega] := 
+    CALCULATE( 
+        SUM(Pedidos[Total de línea]),
+        USERELATIONSHIP(Pedidos[Fecha de entrega], Fechas[Fecha])
+    )
+````
+
+Así es como se vería la estructura de datos:
+
+- **_Tabla de hechos_** "Ventas": Se relaciona con la **_RPLYDIM_** "Fechas" a través de las 3 **_FKs_**.
+
+- **_RPLYDIM_** "Atributos de Tiempo": En nuestro caso es la **_tabla de dimensión_** de Tiempo.
+
+Con esta estructura, podríamos responder preguntas como:
+
+- **"¿Cuál es la cantidad total de Productos vendidos que se enviaron el mes de marzo?"**
+- **"¿En qué ciudades se hiciero más entregas en agosto?"**
+
+Las **_JUNKDIMs_** nos permiten simplificar el **_dm_** y optimizar el espacio, ya que no tendríamos que crear dimensiones separadas para cada atributo relacionado (**_FK_**).
+
 
 

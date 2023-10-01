@@ -373,5 +373,55 @@ Other solutions can complicate our lives, such as setting up different views (in
 
 **_Attention!_**: It is essential to define **_RPLYDIMs_** properly for our **_pipeline_** to work well. This implies that, as **Data Engineers**, we need to understand, in the **_pipeline_** of our project, from the client's business to the final solution where we will display the results.
 
+#### Example of using Role-Playing Dimensions (RPLYDIM)
+
+Let's assume we have a Data Warehouse (**_DWH_**) that stores Sales data of products. In this **_DWH_**, we have a primary **_fact table_** called "Sales" that stores detailed information about each transaction, such as order date, shipping date, delivery date, the product sold, customer, quantity, price, and more.
+
+Additionally, we want to implement the solution in **_Power BI_**.
+
+Now, we need to perform specific analyses involving time attributes. Each of these attributes has a relationship with the Time dimension.
+
+Instead of creating separate dimensions for dates, we could opt for a **_Role-Playing Dimension (RPLYDIM)_**, and we wouldn't need a distinct table for the Time **_dimension table_**.
+
+Challenges in handling this:
+
+1. In **_Power BI_**, we cannot maintain more than one relationship with the same field, so we need to selectively implement the relationship in DAX, depending on our needs.
+
+2. In other systems, the implementation may involve creating multiple Time **_dimension tables_** for each attribute of the **_fact table_** with which we want to establish a relationship.
+
+In our case, depending on the metric we want to obtain, we would use codes like the following:
+
+````DAX
+[Total Sales by Order Date] :=
+    CALCULATE(
+        SUM(Orders[Line Total]),
+        USERELATIONSHIP(Orders[Order Date], Dates[Date])
+    )
+
+[Total Sales by Ship Date] :=
+    CALCULATE(
+        SUM(Orders[Line Total]),
+        USERELATIONSHIP(Orders[Ship Date], Dates[Date])
+    )
+
+[Total Sales by Delivery Date] :=
+    CALCULATE(
+        SUM(Orders[Line Total]),
+        USERELATIONSHIP(Orders[Delivery Date], Dates[Date])
+    )
+````
+
+Here's how the data structure would look:
+
+- **_Fact Table_** "Sales": It relates to the **_RPLYDIM_** "Dates" through the 3 **_FKs_**.
+
+- **_RPLYDIM_** "Time Attributes": In our case, it's the Time **_dimension table_**.
+
+With this structure, we could answer questions like:
+
+- **"What is the total quantity of Products sold that were shipped in the month of March?"**
+- **"In which cities were more deliveries made in August?"**
+
+**_JUNKDIMs_** allow us to simplify the **_dm_** and optimize space, as we wouldn't have to create separate dimensions for each related attribute (**_FK_**).
 
 

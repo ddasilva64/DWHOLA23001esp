@@ -486,4 +486,526 @@ Otra manera de verlas es como:
 
 El segundo modelo está **desnormalizado** y es **una mejor solución** para un **_DDM_**.
 
+## Dimensiones estáticas o fijas (Static Dimensions - STATDIM -)
 
+Proceden de la nada, son dimensiones que no existen en la base de datos **_OLTP_** de origen, como entidades.
+
+Las dimensiones estáticas se generan mediante un script **_SQL_**, un procedimiento almacenado o un archivo externo, y se crean manualmente.
+
+Dado que no se extraen de la fuente de datos **_OLTP_**, se puede considerar que se crean en el contexto del **_DWH_**.
+
+Una práctica muy saludable es no crearlas en el **_DWH_**, sino en una hoja de cálculo en el servidor corporativo.
+
+Una dimensión que no existe en la **_OLTP_** no necesariamente debe ser una **_STATDIM_**. Pero si colocamos las dimensiones estáticas y dinámicas que no existen en la **_OLTP_** en un libro (por ejemplo, Excel) en el servidor y las ponemos a disposición del usuario, entonces este será consciente de las entidades estáticas. Si creamos las **_STATDIM_** únicamente en el **_DWH_**, esto podría generar desconfianza en el usuario, ya que no las verá.
+
+**_¡Advertencia!_**: No debemos confiar en los usuarios (Directores o Gerentes), si faltan entidades en la BD **_OLTP_** (que se convertirán en dimensiones en el **_DDM_**), debemos agregarlas antes del **_DWH_** y deben estar relacionadas con el **_DWH_**.
+
+### Ejemplo de dimensiones estáticas o fijas (Static Dimensions - STATDIM -)
+
+Un ejemplo que siempre tendremos es la **_tabla de dimensión_** de Tiempo; otro ejemplo son los códigos de estado.
+
+Otros ejemplos (no estáticos, aunque no existan en la BD **_OLTP_**) pueden ser cualquier entidad que no exista en la BD **_OLTP_**.
+
+## Dimensiones que cambian lentamente (Slowly Changing Dimensions - SCD -)
+
+Una **_SCD_** en un **_DWH_** es una dimensión que contiene datos relativamente estáticos que pueden cambiar lentamente y de manera impredecible, en lugar de seguir un horario regular. Algunos ejemplos de dimensiones típicas que cambian lentamente son entidades como Localizaciones Geográficas, Clientes o Nombres de Productos. ([Wikipedia](https://en.wikipedia.org/wiki/Slowly_changing_dimension)).  
+
+<p><br></p>
+
+![001-Dimensión](https://i.imgur.com/kXDzc6e.png)  
+_Dimensión (imagen 001)_  
+
+<p><br></p>
+
+#### Tipos de SCD
+
+En una BD dimensional, las **_SCD_** son aquellas dimensiones que cambian con el tiempo, pero no necesariamente de manera constante o predecible. **Por ejemplo, en una tabla de datos de Clientes, la dirección del cliente puede cambiar con el tiempo, pero no todos los clientes cambian de dirección a la misma velocidad. Algunos clientes pueden cambiar de dirección cada mes, mientras que otros pueden mantener la misma dirección durante años**.
+
+La gestión adecuada de las **_SCD_** es importante para mantener la precisión y la integridad de los datos dimensionales en una base de datos, ya que permite a los usuarios realizar análisis históricos y comparar datos a lo largo del tiempo.
+
+#### Elección del tipo de SCD
+
+La elección del tipo de **_SCD_** a utilizar depende de las necesidades específicas del **_DWH_** y las necesidades de análisis. Es importante tener en cuenta factores como la importancia de los datos históricos, la frecuencia de los cambios en las dimensiones y las implicaciones de almacenamiento y rendimiento de cada enfoque.
+
+Las **_SCD_** son un aspecto crucial de los **_DWHs_**, ya que permiten representar los datos a lo largo del tiempo, facilitando así un análisis e informes históricos precisos.
+
+#### SCD-0
+
+**_SCD-0_** no tiene en cuenta la gestión de cambios históricos. Se aplica cuando la información nunca se modifica, es decir, los atributos en **_SCD-0_** nunca cambian y se asignan a atributos que tienen valores duraderos o se describen como "**originales**".
+
+Se aplica a la mayoría de los atributos de las dimensiones.
+
+Lo que esto significa en conjunto es que, **ya que no hay cambios en la tabla original, tampoco los hay en la dimensión**.
+
+##### Ejemplo de SDC-0
+
+Ejemplos: Fecha de nacimiento, puntuación de crédito original.
+
+#### SCD-1
+
+**_SCD-1_** no guarda históricos. La nueva información sobrescribe siempre la antigua. Principalmente, la sobrescritura se realiza debido a errores de calidad de datos. Este tipo de dimensiones es fácil de mantener y se utiliza cuando la información histórica no es importante. Es decir, **es apropiado cuando los datos históricos no son relevantes o cuando pueden recuperarse de otras fuentes**.
+
+##### Ejemplo de SDC-1
+
+Imaginemos el registro de un estudiante en una Facultad y luego, debido a reconsideraciones, cambia de Facultad.
+
+**_Tabla transaccional en el momento del registro (día 1)_**
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Marketing    |
+
+**_Tabla dimensional en el momento del registro (día 1)_**
+
+Creamos un Id_Estudiante que es una clave sustituta o subrogada -**_SK_**-, que tiene como objetivo mejorar el rendimiento en las búsquedas de la dimensión con una clave numérica.
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad** | 
+| :---------------: | :-------------------: | :------------------ | :----------: |
+| 1                 | EST12345              | José López          | Marketing    |
+
+El día 2 José López cambia de Facultad a Ingeniería (lo ha reconsiderado).
+
+**_Tabla transaccional en el momento del cambio de Facultad (día 2)_**
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Ingeniería   |
+
+**_Tabla dimensional en el momento del cambio de Facultad (día 2)_**
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :-------------------: | :------------------ | :----------: |
+| 1                 | EST12345              | José López          | Ingeniería   |
+
+Lo que esto significa en conjunto es que, a pesar de que haya cambios, **cada vez se importan todos los registros de la tabla transaccional (borrando los que existían previamente en la tabla dimensional)**. Es decir, los registros en la tabla dimensional son los "**originales**" en la tabla transaccional, sin cambios.              
+
+#### SCD-2
+
+**_SCD-2_** almacena información histórica en el **_DWH_**.
+
+Cuando hay un cambio, se crea una nueva entrada con su fecha y **_SK_** correspondiente.
+
+**_SCD-2_** **se usa generalmente cuando se necesita un análisis histórico y la dimensión cambia relativamente poco**. Cuando se produce algún cambio en los valores de los registros, **se agrega una nueva fila** y se deben completar los datos relacionados con el historial de cambios.
+
+##### Ejemplo de SDC-2
+
+Imagina el mismo ejemplo anterior, pero esta vez queremos almacenar datos históricos.
+
+**_Inscripción_**
+
+**_Tabla transaccional en el momento del registro (día 1)_**
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Marketing    |
+
+**_Tabla dimensional en el momento del registro (día 1)_**
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad** | **Fecha_Inicio** | **Fecha_Fin** | **Versión** | **Actual** |
+| :---------------: | :-------------------: | :------------------ | :----------: | :--------------: | :-----------: | :---------: | :--------: |
+| 1                 | EST12345              | José López          | Marketing    | 01/01/2020       |               | 1           | True       |
+
+El día 2, José López cambia de Facultad a Ingeniería (lo ha reconsiderado).
+
+**_Tabla transaccional en el momento del cambio de Facultad (día 2)_**
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Ingeniería   |
+
+**_Tabla dimensional en el momento del cambio de Facultad (día 2)_**
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad** | **Fecha_Inicio** | **Fecha_Fin** | **Versión** | **Actual** |
+| :---------------: | :-------------------: | :------------------ | :----------: | :--------------: | :-----------: | :---------: | :--------: |
+| 1                 | EST12345              | José López          | Marketing    | 01/01/2020       | 01/01/2020    | 1           | False      |
+| 2                 | EST12345              | José López          | Ingeniería   | 02/01/2020       |               | 2           | True       |
+
+Esto significa que **cada vez que hay un cambio, se importan todos los registros de la tabla transaccional y se agrega una nueva fila a la tabla dimensional**, manteniendo así los datos históricos. La columna "Actual" indica la versión actual del registro.
+
+#### SCD-3
+
+**_SCD-3_** almacena información histórica en el **_DWH_**.
+
+**_SCD-3_** se utiliza **cuando es importante seguir los cambios de atributos específicos mientras se mantiene la simplicidad en el modelo de datos**. **Requiere agregar** a la tabla de dimensión **una columna adicional** por cada columna cuyos valores se desea mantener un historial de cambios.
+
+##### Ejemplo de SDC-3
+
+Imagina el mismo ejemplo anterior pero esta vez queremos almacenar datos históricos.
+
+**_Inscripción_**
+
+**_Tabla transaccional en el momento del registro (día 1)_**
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Marketing    |
+
+**_Tabla dimensional en el momento del registro (día 1)_**
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad_Antigua** | **Facultad_Nueva** |
+| :---------------: | :-------------------: | :------------------ | :------------------: | :----------------: |
+| 1                 | EST12345              | José López          |                      | Marketing          |
+
+El día 2, José López cambia de Facultad a Ingeniería (lo ha reconsiderado).
+
+**_Tabla transaccional en el momento del cambio de Facultad (día 2)_**
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Ingeniería   |
+
+**_Tabla dimensional en el momento del cambio de Facultad (día 2)_**  
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad_Antigua** | **Facultad_Nueva** |
+| :---------------: | :-------------------: | :------------------ | :------------------: | :----------------: |
+| 1                 | EST12345              | José López          | Marketing            | Ingeniería         |
+
+#### SCD-4 (historia separada)
+
+**_SCD-4_** se conoce comúnmente como *tablas históricas*.
+
+**_SCD-4_** utiliza "*tablas históricas*" donde **una tabla conserva los datos actuales y, además, se utiliza una tabla histórica** para mantener un registro de algunos o todos los cambios. Las dos **_SK_** (**_tabla de dimensión_** y **_tabla histórica_**) hacen referencia a la **_tabla de hechos_** para mejorar el rendimiento de la consulta.
+
+##### Ejemplo de SDC-4
+
+En el siguiente ejemplo, el nombre de la tabla original (transaccional) es Proveedor y la **_tabla histórica_** es Proveedor_Histórico:
+
+| **SK** |**Clave** | **Nombre**                 | **Estado** |
+| :----: | :----- | :----------------------- | :-------: |
+| 124    | ABC    | Acme & Johnson Supply Co | IL        |
+
+
+| **SK** |**Clave** | **Nombre**                 | **Estado** | **Fecha de registro** |
+| :----: | :----- | :----------------------- | :-------: | :-------------------: |
+| 123    | ABC    | Acme Supply Co           | AC        | 2003-06-14T00:00:00   |
+| 124    | ABC    | Acme & Johnson Supply Co | IL        | 2004-12-22T00:00:00   |
+
+Este método se asemeja a cómo funcionan las *tablas de auditoría* en bases de datos. Esta es una excelente manera de realizar un seguimiento de los registros que tienen muchos cambios a lo largo del tiempo.
+
+A la tabla histórica a menudo se le llama *mini-dimensión*.
+
+**_SCD-4_** se utiliza cuando **_SCD-2_** crece rápidamente debido a que los atributos de la dimensión cambian con frecuencia. En **_SCD-4_**, los atributos que cambian con frecuencia se eliminarán de la dimensión principal y se agregarán a la *mini-dimensión*.
+
+Consideremos otro ejemplo para explicar lo anterior, con una **_tabla de dimensión_** de Clientes con la siguiente estructura:
+- Clave (**_PK_**)
+- Fecha de inicio
+- Fecha de finalización
+- Nombre
+- Fecha de nacimiento
+- Estado
+- Rango de edad
+- Rango de ingresos
+- Rango de compras
+
+Los atributos del cliente, como el nombre, la fecha de nacimiento y el estado del cliente, cambian muy raramente o ni siquiera cambian, pero se espera que los rangos de edad, los rangos de ingresos y los rangos de compras cambien con mucha frecuencia.
+
+Si una organización con 100 millones de clientes utiliza esta dimensión de Cliente, es posible que esta dimensión crezca a 200 o 300 millones de registros en un año, asumiendo que habrá al menos dos o tres cambios por cliente al año.
+
+En ese caso, podemos dividir la dimensión en dos dimensiones, una con los atributos que cambian con menos frecuencia y otra con los atributos que cambian con más frecuencia. Los atributos que cambian con frecuencia se agruparán en la *mini-dimensión*.
+
+Dimensión de Clientes
+- Clave (**_PK_**)
+- Fecha de inicio
+- Fecha de finalización
+- Nombre
+- Fecha de nacimiento
+- Estado
+
+Mini-dimensión
+- Clave (**_PK_**)
+- Rango de edad
+- Rango de ingresos
+- Rango de compras
+
+La *mini-dimensión* contendrá una fila para cada posible combinación de atributos. En nuestro caso, todas las combinaciones posibles de rangos de edad, rangos de ingresos y rangos de compras estarán disponibles en la *mini-dimensión* con la misma **_PK_** que en la **_tabla de dimensión_**.
+
+Si tenemos 20 rangos de edad diferentes, 4 rangos de ingresos diferentes y 3 rangos de compras, tendremos 20 X 4 X 3 = 240 combinaciones posibles diferentes.
+
+Estos valores se pueden llenar en la tabla de **_mini-dimensión_** una vez para siempre con una **_SK_** que oscila entre 1 y 240.
+
+**_Nota importante_**: En la *mini-dimensión* no se almacenan los atributos históricos, aunque la **_tabla de hechos_** conserva el historial de asignación de atributos de la dimensión.
+
+Dado que ambas **_tablas de dimensión_** están relacionadas con una **_tabla de hechos_** (Ventas), esta tendrá la PK (natural) de la Dimensión de Clientes y la PK de la **_mini-dimensión_** (**_SK_**).
+
+Hechos de Ventas
+- PK_Clientes
+- SK_MiniDimensión
+- Fecha
+- Clave Producto
+etc.
+
+Un desafío que se presenta es cuando la *mini-dimensión* comienza a cambiar rápidamente. En ese caso, se pueden introducir múltiples *mini-dimensiones* para gestionar estos escenarios. Si ningún registro de hechos debe asociar la dimensión principal y la *mini-dimensión*, se puede utilizar una **_tabla de hechos_** *sin hechos* para asociar la dimensión principal y la *mini-dimensión*.
+
+#### SCD-5
+
+**_SCD-5_** se basa en la *mini-dimensión* **_SCD-4_** al incrustar una clave de "mini-dimensión" del "*perfil actual*" en la dimensión base que se sobrescribe como un atributo **_SCD-1_**. Este enfoque, llamado **_SCD-5_** porque **4 + 1 = 5**, permite acceder a los valores de los atributos de la mini-dimensión asignados actualmente junto con los demás de la dimensión base sin vincularlos a través de una **_tabla de hechos_**. Normalmente representamos la dimensión base y el estabilizador del perfil de la mini-dimensión actual como una tabla única en la capa de presentación. Los atributos de los estabilizadores deben tener nombres de columnas diferentes, como "Nivel de Ingresos Actual", para distinguirlos de los atributos de la mini-dimensión vinculados a la **_tabla de hechos_**. El equipo de **_ETL_** debe actualizar/sobrescribir la referencia de la mini-dimensión **_SCD-1_** cada vez que la mini-dimensión actual cambie con el tiempo.
+
+##### Ejemplo de SCD-5
+
+Ventas (**_tabla de hechos_**)
+- Fecha (**_FK_**)
+- Cliente (**_FK_**)
+- Perfil (**_FK_**)
+...
+
+Clientes (**_tabla de dimensión_**)
+- Cliente (**_PK_**)
+- ID de Cliente (**_NK_**)
+- Nombre
+...
+- Perfil Actual (**_FK_**)
+
+Perfil (mini-dimensión)
+- Perfil (**_PK_**)
+- Rango de Edad
+- Puntuación de Frecuencia de Compra
+- Nivel de Ingresos
+
+Vista de la mini-dimensión como estabilizador
+- Perfil Actual (**_PK_**)
+- Rango de Edad Actual
+- Puntuación de Frecuencia de Compra Actual
+- Nivel de Ingresos Actual
+
+#### SCD-6 (híbrida)
+
+**_SCD-6_** combina los enfoques de los tipos 1, 2 y 3 (**1+2+3=6**). Consiste en considerar una **_SCD-1_** y agregar un par de columnas adicionales que indican el rango temporal de validez de una de las columnas de la tabla. Aunque el diseño es complejo, entre sus beneficios podemos destacar que **reduce el tamaño de las consultas temporales**. Existe otra variante para este tipo de dimensión, que consiste en tener versiones del registro de la dimensión (numeradas de 0 a n+1, donde 0 siempre es la versión actual).
+
+##### Ejemplo de SCD-6
+
+**_Inscripción en la Facultad de Astrofísica Azul_**
+
+Tabla transaccional
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad**     |
+| :--------------:  | :------------------ | :--------------: |
+| EST12345          | José López          | Astrofísica Azul |
+
+Tabla de dimensión (después del **_ETL_**)
+
+Nos damos cuenta, en el **_ETL_**, de que la Astrofísica Azul no es muy inteligente. Todos saben que la Astrofísica es Verde.
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad_Antigua** | **Facultad_Nueva** | **Fecha_Inicio** | **Fecha_Final** | **Facultad_Actual** |
+| :--------------:   | :-----------------:   | :--------------      | :-----------------:   | :---------------:   | :------------:   | :------------: | :-----------------: |
+| 1                  | EST12345              | José López         |                      | Astrofísica Verde  | 18/08/2023       |                  | N                   |
+
+**_Cambio de Facultad a Clima Salado_**
+
+Tabla transaccional
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad** |
+| :---------------: | :------------------ | :----------: |
+| EST12345          | José López          | Clima Salado |
+
+Tabla de dimensión (después del **_ETL_**)
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad_Antigua** | **Facultad_Nueva** | **Fecha_Inicio** | **Fecha_Final** | **Facultad_Actual** |
+| :--------------:   | :-----------------:   | :--------------      | :-----------------:   | :---------------:   | :------------:   | :------------: | :-----------------: |
+| 1                  | EST12345              | José López         |                      | Astrofísica Verde  | 18/08/2023       | 19/08/2023       | N                   |
+| 2                  | EST12345              | José López         | Astrofísica Verde    | Clima Salado       | 19/08/2023       |                  | Y                   |
+
+**_Cambio de Facultad, nuevamente, a Astrofísica Verde_**
+
+Tabla transaccional
+
+| **Id_Estudiante** | **Nombre Completo** | **Facultad**      |
+| :---------------: | :------------------ | :---------------: |
+| EST12345          | José López          | Astrofísica Verde |
+
+Tabla de dimensión (después del **_ETL_**)
+
+| **Id_Estudiante** | **Código_Estudiante** | **Nombre Completo** | **Facultad_Antigua** | **Facultad_Nueva** | **Fecha_Inicio** | **Fecha_Final** | **Facultad_Actual** |
+| :--------------:   | :-----------------:   | :--------------      | :-----------------:   | :---------------:   | :------------:   | :------------: | :-----------------: |
+| 1                  | EST12345              | José López         |                      | Astrofísica Verde  | 18/08/2023       | 19/08/2023       | N                   |
+| 2                  | EST12345              | José López         | Astrofísica Verde    | Clima Salado       | 19/08/2023       | 20/08/2023       | N                   |
+| 3                  | EST12345              | José López         | Clima Salado         | Astrofísica Verde  | 20/08/2023       |                  | Y                   |
+
+#### SCD-7 (Híbrido: Clave Sustituta y Clave Natural)
+
+Una implementación alternativa es incluir tanto la clave sustituta como la clave natural en la **_tabla de hechos_**.
+
+Este método permite enlaces más flexibles a la dimensión, incluso si se ha utilizado **_SCD-2_** en lugar de **_SCD-6_**.
+
+Con **_SCD-7_**, la **_tabla de hechos_** contiene claves dobles **_FKs_** para una dimensión dada: una **_SK_** vinculada a la tabla de dimensión donde se realiza el seguimiento de los atributos de tipo 2, además de la clave natural duradera de la dimensión vinculada a la fila actual de la dimensión tipo 2 para presentar el valor actual del atributo.
+
+**_SCD-7_** ofrece la misma funcionalidad que **_SCD-6_**, pero se logra mediante claves duales en lugar de sobrescribir físicamente los atributos actuales como en **_SCD-6_**. Al igual que otros enfoques híbridos, los atributos de la dimensión actual deben etiquetarse de manera diferente para minimizar la confusión.
+
+##### Ejemplo de SCD-7
+
+Imagina el siguiente escenario:
+
+Ventas (**_tabla de hechos_**)
+- Fecha (**_PK_**)
+- Clave de Producto (**_FK_**)
+- Clave de Producto Duradera (**_DK_**)
+- más **_FKs_**
+- datos
+
+Productos (**_tabla de dimensión_**)
+- Clave de Producto (**_PK_**)
+- **_SK_**
+- **_DK_**
+- Descripción
+- Fecha de Inicio
+- Fecha de Finalización
+- ...
+
+Productos Actuales (**_tabla de dimensión actual_**)
+- **_DK_**
+- Descripción
+- ...
+
+#### Resumen de SCD's
+
+| **_SCD_**   | **_Tabla de Dimensión_**                        | **_Tabla de Hechos_**                                                                                                |
+| :---------: | :--------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| **_SCD-0_** | Sin cambios en el valor del atributo     | Los hechos asociados al valor original del atributo                                                              |
+| **_SCD-1_** | Sobrescribe el valor del atributo        | Los hechos asociados al valor actual del atributo                                                                |
+| **_SCD-2_** | Agrega una nueva fila con el nuevo valor del atributo | Los hechos asociados al valor del atributo cuando ocurre el hecho                                      |
+| **_SCD-3_** | Agrega una nueva columna para preservar los valores del atributo anterior y actual | Hechos asociados al valor alternativo del atributo (anterior y actual)        |
+| **_SCD-4_** | Agrega una *mini-dimensión* que contiene atributos que cambian rápidamente | Los hechos asociados a atributos que cambian rápidamente tienen efecto cuando se produce un hecho |
+| **_SCD-5_** | **_SCD-4_** + **_SCD-1_** = Agrega la mini-dimensión (**_SCD-4_**), junto con la clave de **_SCD-1_** sobrescrita en la dimensión base | Los hechos asociados con atributos que cambian rápidamente tienen efecto cuando se produjo el hecho, además de los valores de los atributos actuales que cambian rápidamente |
+| **_SCD-6_** | **_SCD-1_** + **_SCD-2_** + **_SCD-3_** = Agrega atributos sobrescritos **_SCD-1_** a la fila de dimensiones **_SCD-2_** y sobrescribe todas las filas de dimensiones anteriores | Los hechos asociados al valor del atributo cuando se produjo el hecho, más los valores actuales |
+| **_SCD-7_** | Agrega una fila de dimensión **_SCD-2_** con un valor de atributo nuevo, además de la visualización limitada a las filas y/o los valores de atributo actuales | Los hechos asociados al valor del atributo cuando se produjo el hecho, más los valores actuales |
+
+### Dimensiones que Cambian Rápidamente (Rapidly Changing Dimensions - RCD -)
+
+Estas son dimensiones que cambian (o pueden cambiar) rápidamente con el tiempo. Las **_RCDs_** generalmente se implementan como **_JUNKDIMs_**.
+
+La manipulación de las **_RCDs_** en el **_DWH_** es muy difícil debido al rendimiento. Como hemos visto, las **_SCD_** se utilizan para mantener el historial de cambios. Sin embargo, el problema con **_SCD-2_** es que con cada cambio en el atributo de la dimensión, agrega una nueva fila a la tabla. Si hay dimensiones que cambian con frecuencia, la tabla se vuelve más grande y puede causar graves problemas de rendimiento. Por lo tanto, el uso de **_SCD-2_** puede no ser una buena decisión para implementar dimensiones que cambian rápidamente.
+
+##### Ejemplo de RCD
+
+Supongamos que en la dimensión Cliente tenemos 1000 filas. En promedio, cada cliente cambia 10 atributos al año. Si usamos **_SCD-2_** para gestionar este escenario, habrá 1000*10 = 10000 filas al final del año. Si la tabla tiene millones de filas, será muy difícil gestionar la situación con **_SCD-2_**. Por lo tanto, usaremos un enfoque **_RCD_**.
+
+Para implementarlo, usaremos un atributo de cambio rápido por separado, mediante la implementación de una **_JUNKDIM_**.
+
+En la tabla de hechos, no todos los atributos cambian rápidamente. Algunos atributos pueden cambiar rápidamente y otros no. La idea aquí es separar el atributo que cambia rápidamente de los que cambian lentamente y mover estos atributos que cambian rápidamente a otra tabla **_JUNKDIM_**, manteniendo el atributo que cambia lentamente en la misma tabla. De esta manera, podemos gestionar situaciones de aumento en el tamaño de la tabla.
+
+Cliente (**_tabla de dimensión_**)
+- ID
+- Nombre
+- Ciudad
+- Estado
+- Género
+- Ingresos
+- Valoración
+- Puntuación de Crédito
+
+Atributos como ID, Nombre, Ciudad, Estado o Género no cambiarán o cambiarán muy raramente. En cambio, atributos como Ingresos, Valoración y Puntuación de Crédito cambian cada mes según las circunstancias del cliente. Por lo tanto, debemos separar estas columnas de la tabla de clientes; de lo contrario, llenaríamos la tabla si usamos **_SCD-2_** en la dimensión Cliente. Podemos colocar estas columnas que cambian rápidamente en la **_tabla de dimensiones JUNKDIM_**.
+
+Cliente Junk (**_JUNKDIM_**)
+- SK
+- Ingresos
+- Valoración
+- Puntuación de Crédito
+
+La dimensión Cliente permanece como:
+
+Cliente (**_tabla de dimensión_**)
+- ID
+- Nombre
+- Ciudad
+- Estado
+- Género
+
+Sin embargo, debemos enlazar la **_JUNKDIM_** (Cliente Junk) y la **_tabla de dimensión_** (Cliente). Además, no podemos simplemente hacer referencia a la **_JUNKDIM_** agregando su clave primaria (**_SK_**) a Cliente como una clave foránea (**_FK_**). Dado que cualquier cambio realizado en la **_JUNKDIM_** debe reflejarse en la **_tabla de dimensión_**, esto aumenta obviamente los datos del Cliente. En su lugar, crearemos otra tabla de *mini-dimensión* que actúe como puente entre la **_tabla de dimensión_** y la **_JUNKDIM_**. También podemos agregar columnas como la fecha de inicio y finalización para realizar un seguimiento del historial de cambios.
+
+Cliente Mini Dim (**_Bridge Dimension - BRIDDIM-_**)
+- ID
+- SK
+- Fecha de Inicio
+- Fecha de Finalización
+
+Las **_BRIDDIMs_** permiten definir relaciones muchos a muchos entre **_tablas de hechos_**. Son necesarias para definir, por ejemplo, la relación entre un piloto y sus múltiples patrocinadores (m:n).
+
+Esta tabla es solo un puente entre dos tablas y no requiere ninguna clave (**_SK_**).
+
+Un ejemplo de RCD, cuando el crecimiento es explosivo, son las Dimensiones Monstruo (**_MONSDIM_**).
+
+### Dimensiones Apiladas (Stacked Dimensions - STACDIM -)
+
+**_STACDIM_** se utiliza cuando dos o más dimensiones se combinan en una sola dimensión. Tiene uno o dos atributos y siempre es **_SCD-0_**.
+
+Ejemplos (tipo y estado): Tipo de producto, Estado del cliente, Tipo de tienda, Tipo de seguridad, etc. Todas estas columnas deberían almacenarse en sus respectivas dimensiones porque son propiedades de la dimensión.
+
+Sin embargo, existen columnas de tipo y estado que son propias de la **_tabla de hechos_**, como Tipo de transacción o Estado de transacción. **Para combinar el tipo de transacción y el estado de la transacción en una dimensión, creamos una dimensión ficticia. Sin embargo, nunca deberíamos utilizar una STACDIM**.
+
+**No se recomienda el uso de una STACDIM. Está mal utilizarlas, pero existen**. Normalmente, esto se debe a que era así en el sistema original, por lo que simplemente se copia al **_DWH_** (sin reflexionar).
+
+### Dimensión Diferida (Deferred Dimension - DEFEDIM -)
+
+Cuando se carga un registro de una **_tabla de hechos_**, es posible que un registro de una **_tabla de dimensión_** aún no esté listo. Técnicamente se le llama **_miembro inferior_** o **_dimensión pendiente_**.
+
+### Dimensión Distorsionada (Distorted Dimension - DISTDIM -)
+
+Una dimensión que se utiliza en muchos lugares se llama **_dimensión distorsionada - DISTDIM -_**. Puede utilizarse en una sola base de datos o en varias, o en múltiples **_tablas de hechos_**, o en múltiples **_DM_** o **_DWH_**.
+
+## Algunas de las Peores Prácticas al Trabajar con Dimensiones y Hechos
+
+1. **No diseñar la dimensión de Tiempo en el DWH, esperando que la herramienta de BI lo haga por ti**.
+
+2. **Diseñar el DDM con JUNKDIMs en lugar de tablas de hechos normales**.
+
+3. **No crear SHRKDIMs y esperar a que la herramienta de BI lo haga por ti**.
+
+4. **No conocer suficientemente el negocio, lo que puede llevar a no contemplar CONFDIMs esenciales en nuestro DDM**.
+
+5. **No definir adecuadamente las RPLYDIMs por desconocimiento de algún punto en el pipeline de nuestro proyecto**.
+
+6. **Definir DEGEDIMs**.
+
+7. **Debemos evitar las OUTGDIM en nuestro DDM**.
+
+8. **Si confías en los usuarios (Directores o Gerentes), faltarán STATDIMs en tu DDM**.
+
+9. **Considerar los cambios en las dimensiones como SCD-0**.
+
+10. **Considerar SCD-2 en lugar de contemplar posibles RCD**.
+
+11. **Si encuentras alguna STACDIM en el DDM, entonces has cometido un error en el análisis dimensional**.
+
+## Conclusiones
+
+Diseñar la solución **_BI_** o cualquier otra visualización de análisis de datos es una pequeña parte del trabajo, equivalente a la parte visible de un iceberg (solo vemos el 20% del trabajo). Esto es lo que percibe el usuario.
+
+Diseñar las **_tablas de hechos_** y las **_tablas de dimensiones_** es una parte pequeña pero importante del trabajo, y no es percibida por los usuarios. Como Ingenieros de Datos, debemos realizar muchas otras tareas, como maximizar el rendimiento, diseñar un **mecanismo de captura de datos modificados** (**_CDC_**), que nos asegure que los datos se carguen de forma incremental, si es necesario.
+
+En los procesos **_ETL_** complejos, es posible que necesitemos actualizaciones frecuentes según las necesidades del negocio. **Es posible que tengamos que agregar o eliminar campos, cambiar tipos de datos, modificar el SCD aplicado a una tabla, etc.** Realizar estos cambios en las consultas no solo lleva mucho tiempo, sino que también es propenso a generar errores.
+
+**_¡MUY IMPORTANTE!_**: **Con más frecuencia que en las bases de datos OLTP, con cualquier cambio menor solicitado por los usuarios y antes de que nos demos cuenta, es posible que hayamos dañado el pipeline existente. Es recomendable trasladar los cambios al DWH tanto como sea posible y verificar el impacto antes de la fase de visualización de datos**.
+
+Si en este punto pensamos que la mayor parte del trabajo duro está hecho, debemos considerar que **las empresas buscan constantemente modernizar y mejorar sus procesos de datos**. Puede llegar el día en que nuestra empresa decida cambiar de plataforma de almacenamiento de datos. Supongamos que han decidido pasar de una base de datos local a una plataforma en la nube.
+
+**_¡MUY IMPORTANTE!_**: Para prevenir este problema, **primero debemos crear una nueva arquitectura en la nueva plataforma**, luego **debemos reescribir todos los procesos ETL para reconfigurar los nuevos pipelines**.
+
+Imaginemos que, por alguna razón, hemos tenido que trabajar sin un **_DWH_**, directamente con **_Power BI_**, y ahora queremos implementar procesos **_ETL_** con Pentaho Data Integration (**_PDI_**). En ese caso, primero debemos diseñar las tablas de dimensiones y hechos en el **_DWH_**, luego implementar los procesos **_ETL_**, y finalmente volver a implementar la visualización en **_Power BI_**. Esto implica redescribir todo el pipeline y posiblemente adoptar una estrategia de trabajo colaborativo si no se había adoptado antes.
+
+Los **roles necesarios** para abordar estas tareas van desde **Analistas de Datos** hasta **Ingenieros de Datos** y pueden ser de gran complejidad.
+
+**En otras palabras, el impacto de los cambios puede ser tan grande que posiblemente debamos repetir todo el proceso desde cero**. Por lo tanto, **el nivel de complejidad involucrado puede ser muy alto, incluso para usuarios técnicos. Es absolutamente esencial que estos profesionales técnicos tengan certificación (no necesariamente universitaria, pero reconocida) como Analistas de Datos y/o Ingenieros de Datos**.
+
+**Conclusión: El análisis y la ingeniería involucrados deben ser realizados por técnicos calificados, equipados con los recursos adecuados y guiados, en términos de negocios, por usuarios lo suficientemente calificados y motivados**.
+
+## ¿Te ha interesado el artículo?
+
+Si tienes alguna duda con respecto a lo expuesto en este artículo, házmelo saber en los comentarios.
+
+Por favor, si te ha gustado el contenido de este artículo, deja un comentario o un "me gusta". Además, si consideras que es lo suficientemente bueno o que puede ayudar a otros usuarios de la red, comparte la publicación en esta plataforma. De esta manera, todos juntos podemos democratizar el conocimiento y quizás ayudar a otras personas que lo necesiten.
+
+## Lista de Imágenes
+
+- **img001**: Del curso "Data Warehousing y modelado OLAP" de Platzi.
+
+## Descargo de Responsabilidad
+
+**_Platzi_** (anteriormente Mejorando.la) es una plataforma de educación en línea de América Latina. Fue fundada en 2011 por el ingeniero colombiano **Freddy Vega** y el científico de la computación guatemalteco **Christian Van Der Henst**. ([Wikipedia](https://es.wikipedia.org/wiki/Platzi))
+
+## Uso de ChatGPT
+
+**_Uso de ChatGPT 3.5_**
+
+Este proyecto ha sido verificado para ortografía, sintaxis y contenido utilizando [**_ChatGPT 3.5_**](https://chat.openai.com/chat).
+
+Referencia:  
+[OpenAI. (2023). ChatGPT (versión del 3 de octubre de 2023) \[Large Language Model\]](https://chat.openai.com/chat)

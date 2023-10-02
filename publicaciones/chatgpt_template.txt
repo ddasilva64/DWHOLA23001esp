@@ -1,10 +1,15 @@
 traduce lo siguiente a Español de España y genera el fihero md de la traducción
 
+no has generado el fichero md, por favor, genéralo
+
 translate next to English and generate translation md file
+
+you did not generate md file, please, do it
 
 tradueix el següent al català i genera el fitxer md de la traducció
 
-_________________________________
+no has generat el fitxer md, si us plau, fes-ho
 
+_________________________________
 
 

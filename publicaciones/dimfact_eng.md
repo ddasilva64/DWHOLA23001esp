@@ -478,4 +478,526 @@ Another way to view them is as:
 
 The second model is **denormalized** and is **a better solution** for a **_DDM_**.
 
+## Static or Fixed Dimensions (Static Dimensions - STATDIM -)
 
+They come from nothing, they are dimensions that do not exist in the **_OLTP_** source database as entities.
+
+Static dimensions are generated using an **_SQL_** script, a stored procedure, or an external file, and they are created manually.
+
+Since they are not extracted from the **_OLTP_** data source, it can be considered that they are created in the context of the **_DWH_**.
+
+A very healthy practice is not to create them in the **_DWH_**, but in a spreadsheet on the corporate server.
+
+A dimension that does not exist in the **_OLTP_** does not necessarily have to be a **_STATDIM_**. But if we place static and dynamic dimensions that do not exist in the **_OLTP_** in a document (such as Excel) on the server and make them available to the user, then they will be aware of the static entities. If we create the **_STATDIM_** only in the **_DWH_**, this could likely generate distrust in the user because they do not see them.
+
+**_Warning!_**: We should not trust users (Directors or Managers). If entities are missing in the **_OLTP_** database (which will be transformed into dimensions in the **_DDM_**), we must add them before the **_DWH_** and relate them to the **_DWH_**.
+
+#### Example of static or fixed dimensions (Static Dimensions - STATDIM -)
+
+An example that we will always have is the **_Time dimension table_**; another example is state codes.
+
+Other examples (not static, even though they do not exist in the **_OLTP_** database) can be any entity that does not exist in the **_OLTP_** database.
+
+## Slowly Changing Dimensions (SCD)
+
+A **_SCD_** in a **_DWH_** is a dimension that contains relatively static data that can change slowly and unpredictably, rather than following a regular schedule. Some examples of typical dimensions that change slowly are entities such as Geographic Locations, Customers, or Product Names. ([Wikipedia](https://en.wikipedia.org/wiki/Slowly_changing_dimension)).
+
+<p><br></p>
+
+![001-Dimension](https://i.imgur.com/kXDzc6e.png)  
+_Dimension (picture 001)_
+
+<p><br></p>
+
+#### Types of SCD
+
+In a dimensional database, **_SCDs_** are those dimensions that change over time, but not necessarily in a constant or predictable manner. **For example, in a Customer data table, the customer's address can change over time, but not all customers change their address at the same rate. Some customers may change their address every month, while others may maintain the same address for years**.
+
+Proper management of **_SCDs_** is important to maintain the accuracy and integrity of dimensional data in a database, as it allows users to perform historical analysis and compare data over time.
+
+#### Choosing the Type of SCD
+
+The choice of which type of **_SCD_** to use depends on the specific needs of the **_DWH_** and analysis requirements. It is important to consider factors such as the importance of historical data, the frequency of changes in dimensions, and the storage and performance implications of each approach.
+
+**_SCDs_** are a crucial aspect of **_DWHs_** as they enable representing data over time, thereby facilitating accurate historical analysis and reporting.
+
+#### SCD-0
+
+**_SCD-0_** does not consider the management of historical changes. It is applied when the information is never changed, meaning attributes in **_SCD-0_** never change and are assigned to attributes that have lasting values or are described as "**originals**".
+
+It applies to most attributes of dimensions.
+
+What this all means is that, **since there are no changes in the original table, there are also no changes in the dimension**.
+
+##### Example of SDC-0
+
+Examples: Date of birth, original credit score. 
+
+#### SCD-1
+
+**_SCD-1_** does not keep historical records. New information always overwrites the old. The overwriting is mainly done due to data quality errors. This type of dimension is easy to maintain and is used when historical information is not important. In other words, **it is appropriate when historical data is not relevant or when it can be retrieved from other sources**.
+
+##### Example of SDC-1
+
+Let's imagine the record of a student at a university, and then, because they reconsider, they change their major.
+
+**_Transactional table at the time of registration (day 1)_**
+
+| **Student_ID** | **Full Name** | **Major** |
+| :------------: | :------------ | :-------: |
+| EST12345       | John Smith    | Marketing |
+
+**_Dimensional table at the time of registration (day 1)_**
+
+We create a Student_ID, which is a surrogate key - **_SK_** - aimed at improving performance in dimension searches with a numerical key.
+
+| **Student_ID** | **Student_Code** | **Full Name** | **Major** |
+| :------------: | :--------------: | :-----------  | :-------: |
+| 1              | EST12345         | John Smith    | Marketing |
+
+On day 2, John Smith changes his major to Engineering (he reconsidered).
+
+**_Transactional table at the time of the major change (day 2)_**
+
+| **Student_ID** | **Full Name** | **Major**   |
+| :------------: | :------------ | :---------: |
+| EST12345       | John Smith    | Engineering |
+
+**_Dimensional table at the time of the major change (day 2)_**
+
+| **Student_ID** | **Student_Code** | **Full Name** | **Major**   |
+| :------------: | :--------------: | :-----------  | :---------: |
+| 1              | EST12345         | John Smith    | Engineering |
+
+What all this means is that, despite there being changes, **each time all records from the transactional table are imported (overwriting those that existed previously in the dimensional table)**. In other words, the records in the dimensional table are the "**originals**" in the transactional table, without changes.
+
+#### SCD-2
+
+**_SCD-2_** stores historical information in the **_DWH_**.
+
+When there is a change, a new entry is created with its appropriate date and **_SK_**.
+
+**_SCD-2_** **is usually used when historical analysis is required and the dimension changes relatively infrequently**. When there is any change in the values of the records, **a new row will be added**, and the data related to the change history will need to be completed.
+
+##### Example of SDC-2
+
+Let's imagine the same previous example, but this time, we want to store historical data.
+
+**_Enrollment_**
+
+**_Transactional table at the time of registration (day 1)_**
+
+| **Student_ID** | **Full Name** | **Major** |
+| :------------: | :------------ | :-------: |
+| EST12345       | John Smith    | Marketing |
+
+**_Dimensional table at the time of registration (day 1)_**
+
+| **Student_ID** | **Student_Code** | **Full Name** | **Major** | **Start_Date** | **End_Date** | **Version** | **Current** |
+| :------------: | :--------------: | :-----------  | :-------: | :------------: | :---------:  | :---------: | :---------: |
+| 1              | EST12345         | John Smith    | Marketing | 01/01/2020     |              | 1           | True        |
+
+On day 2, John Smith changes his major to Engineering (he reconsidered).
+
+**_Transactional table at the time of the major change (day 2)_**
+
+| **Student_ID** | **Full Name** | **Major**   |
+| :------------: | :------------ | :---------: |
+| EST12345       | John Smith    | Engineering |
+
+**_Dimensional table at the time of the major change (day 2)_**
+
+| **Student_ID** | **Student_Code** | **Full Name** | **Major**   | **Start_Date** | **End_Date** | **Version** | **Current** |
+| :------------: | :--------------: | :------------ | :---------: | :------------: | :---------:  | :---------: | :---------: |
+| 1              | EST12345         | John Smith    | Marketing   | 01/01/2020     | 01/01/2020   | 1           | False       |
+| 2              | EST12345         | John Smith    | Engineering | 02/01/2020     |              | 2           | True        |
+
+This means that **each time there is a change, all records from the transactional table are imported, and a new row is added to the dimensional table**, maintaining the historical data. The "Current" column indicates the current version of the record.
+
+#### SCD-3
+
+**_SCD-3_** stores historical information in the **_DWH_**.
+
+**_SCD-3_** is used **when it's important to track specific attribute changes while maintaining simplicity in the data model**. It **requires adding** an additional column **to the dimension table** for each column whose values need to be maintained as a history of changes.
+
+##### Example of SCD-3
+
+Let's imagine the same previous example but with the desire to store historical data.
+
+**_Enrollment_**
+
+**_Transactional table at the time of registration (day 1)_**
+
+| **Student_Id** | **Full Name** | **Faculty** |
+| :------------: | :------------ | :---------: |
+| EST12345       | John Smith    | Marketing   |
+
+**_Dimensional table at the time of registration (day 1)_**
+
+| **Student_Id** | **Student_Code** | **Full Name** | **Old_Faculty** | **New_Faculty** |
+| :------------: | :--------------: | :------------ | :-------------: | :-------------: |
+| 1              | EST12345         | John Smith    |                 | Marketing       |
+
+On day 2, John Smith changes from the Marketing faculty to the Engineering faculty (he had a change of mind).
+
+**_Transactional table at the time of the faculty change (day 2)_**
+
+| **Student_Id** | **Full Name** | **Faculty** |
+| :------------: | :------------ | :---------: |
+| EST12345       | John Smith    | Engineering |
+
+**_Dimensional table at the time of the faculty change (day 2)_**  
+
+| **Student_Id** | **Student_Code** | **Full Name** | **Old_Faculty** | **New_Faculty** |
+| :------------: | :--------------: | :------------ | :-------------: | :-------------: |
+| 1              | EST12345         | John Smith    | Marketing       | Engineering     |
+
+#### SCD-4 (Separate History)
+
+**_SCD-4_** is commonly known as *historical tables*.
+
+**_SCD-4_** uses "*historical tables*" where **one table retains current data, and additionally, a historical table is used** to maintain a record of some or all changes. Both **_SKs_** (**_dimension table_** and **_historical table_**) reference the **_fact table_** to improve query performance.
+
+##### Example of SDC-4
+
+For the following example, the name of the original (transactional) table is Supplier, and the **_historical table_** is Supplier_Historical:
+
+| **SK** | **Key** | **Name**                 | **State** |
+| :----: | :----- | :----------------------- | :-------: |
+| 124    | ABC    | Acme & Johnson Supply Co | IL        |
+
+
+| **SK** | **Key** | **Name**                 | **State** | **Registration date** |
+| :----: | :----- | :----------------------- | :-------: | :-------------------: |
+| 123    | ABC    | Acme Supply Co           | AC        | 2003-06-14T00:00:00   |
+| 124    | ABC    | Acme & Johnson Supply Co | IL        | 2004-12-22T00:00:00   |
+
+This method is similar to how database audit tables work. It's a fantastic way to keep track of records that undergo many changes over time.
+
+The historical table is often referred to as a *mini-dimension*.
+
+**_SCD-4_** is used when **_SCD-2_** is growing rapidly because dimension attributes change frequently. In **_SCD-4_**, attributes that change frequently are removed from the main dimension and added to the *mini-dimension*.
+
+Let's consider another example to explain the above with a **_Customer dimension table_** with the following structure:
+- Key (**_PK_**)
+- Start date
+- End date
+- Name
+- Date of birth
+- State
+- Age range
+- Income range
+- Purchase range
+
+Customer attributes like name, date of birth, and customer state change very rarely or not at all. However, age range, income range, and purchase range are expected to change frequently.
+
+If an organization with 100 million customers uses this Customer dimension, it's expected that this dimension will grow to 200 or 300 million records in a year, assuming at least two or three changes per customer per year.
+
+In this case, we can split the dimension into two dimensions—one with attributes that change less frequently and another with attributes that change more frequently. Attributes that change frequently will be grouped into the *mini-dimension*.
+
+Customer Dimension
+- Key (**_PK_**)
+- Start date
+- End date
+- Name
+- Date of birth
+- State
+
+Mini-Dimension
+- Key (**_PK_**)
+- Age range
+- Income range
+- Purchase range
+
+The *mini-dimension* will contain a row for each possible combination of attributes. In our case, all possible combinations of age ranges, income ranges, and purchase ranges will be available in the *mini-dimension* with the same **_PK_** as in the **_dimension table_**.
+
+If there are 20 different age ranges, 4 different income ranges, and 3 different purchase ranges, there will be 20 X 4 X 3 = 240 different possible combinations.
+
+These values can be populated in the **_mini-dimension table_** once and for all with an **_SK_** ranging from 1 to 240.
+
+**_Important Note_**: The *mini-dimension* doesn't store historical attributes, even though the **_fact table_** retains the history of attribute assignments in the dimension.
+
+Since both **_dimension tables_** are related to a **_fact table_** (Sales), this table will have the primary key (natural) of the Customer Dimension and the primary key of the *mini-dimension* (**_SK_**).
+
+Sales Facts
+- PK_Customers
+- SK_MiniDimension
+- Date
+- Product Key
+etc.
+
+A challenge that arises is when the *mini-dimension* starts changing rapidly. In that case, multiple *mini-dimensions* can be introduced to manage these scenarios. If no fact record needs to associate the main dimension and the *mini-dimension*, a **_fact table_** with *no facts* can be used to associate the main dimension and the *mini-dimension*.
+
+#### SCD-5
+
+**_SCD-5_** is based on the *mini-dimension* **_SCD-4_** by embedding a "mini-dimension" key of the "current profile" into the base dimension, which is overwritten as an **_SCD-1_** attribute. This approach, named **_SCD-5_** because **4 + 1 = 5**, allows accessing the attribute values of the currently assigned mini-dimension together with the base dimension's attributes without linking them through a **_fact table_**. Typically, we represent the base dimension and the current mini-dimension stabilizer as a single table in the presentation layer. The stabilizer attributes should have different column names, such as "Current Income Level," to distinguish them from the mini-dimension attributes linked to the **_fact table_**. The **_ETL_** team must update/overwrite the **_SCD-1_** mini-dimension reference whenever the current mini-dimension changes over time.
+
+##### Example of SCD-5
+
+Sales (**_fact table_**)
+- Date (**_FK_**)
+- Customer (**_FK_**)
+- Profile (**_FK_**)
+...
+
+Customers (**_dimension table_**)
+- Customer (**_PK_**)
+- Customer ID (**_NK_**)
+- Name
+...
+- Current Profile (**_FK_**)
+
+Profile (mini-dimension)
+- Profile (**_PK_**)
+- Age Range
+- Purchase Frequency Score
+- Income Level
+
+View of the mini-dimension as a stabilizer
+- Current Profile (**_PK_**)
+- Current Age Range
+- Current Purchase Frequency Score
+- Current Income Level
+
+#### SCD-6 (Hybrid)
+
+**_SCD-6_** combines the approaches of types 1, 2, and 3 (**1+2+3=6**). It involves considering an **_SCD-1_** and adding a couple of additional columns indicating the time range of validity for one of the table columns. Although the design is complex, among its benefits, we can highlight that it **reduces the size of temporal queries**. There is another variant for this type of dimension, which involves having versions of the dimension record (numbered from 0 to n+1, where 0 is always the current version).
+
+##### Example of SCD-6
+
+**_Enrollment in the Faculty of Blue Astrophysics_**
+
+Transactional table
+
+| **Student_ID** | **Full Name** | **Faculty**       |
+| :-------------:| :------------ | :---------------: |
+| EST12345       | John Smith    | Blue Astrophysics |
+
+Dimension table (after the **_ETL_**)
+
+We realize, in the **_ETL_**, that Blue Astrophysics is not very intelligent. Everyone knows that Astrophysics is Green.
+
+| **Student_ID** | **Student_Code** | **Full Name** | **Old_Faculty** | **New_Faculty**    | **Start_Date** | **End_Date** | **Current_Faculty** |
+| :------------: | :--------------: | :------------ | :-------------: | :----------------: | :------------: | :----------: | :-----------------: |
+| 1              | EST12345         | John Smith    |                 | Green Astrophysics | 18/08/2023     |              | N                   |
+
+**_Change of Faculty to Salty Climate_**
+
+Transactional table
+
+| **Student_ID** | **Full Name** | **Faculty**   |
+| :------------: | :------------ | :-----------: |
+| EST12345       | John Smith    | Salty Climate |
+
+Dimension table (after the **_ETL_**)
+
+| **Student_ID** | **Student_Code** | **Full Name** | **Old_Faculty**    | **New_Faculty**    | **Start_Date** | **End_Date** | **Current_Faculty** |
+| :------------: | :--------------: | :------------ | :----------------: | :----------------: | :------------: | :----------: | :-----------------: |
+| 1              | EST12345          | John Smith   |                    | Green Astrophysics | 18/08/2023     | 19/08/2023   | N                   |
+| 2              | EST12345          | John Smith   | Green Astrophysics | Salty Climate      | 19/08/2023     |              | Y                   |
+
+**_Change of Faculty, once again, to Green Astrophysics_**
+
+Transactional table
+
+| **Student_ID** | **Full Name** | **Faculty**        |
+| :------------: | :------------ | :----------------: |
+| EST12345       | John Smith    | Green Astrophysics |
+
+Dimension table (after the **_ETL_**)
+
+| **Student_ID** | **Student_Code**  | **Full Name** | **Old_Faculty**    | **New_Faculty**    | **Start_Date** | **End_Date** | **Current_Faculty** |
+| :------------: | :---------------: | :------------ | :----------------: | :----------------: | :------------: | :----------: | :-----------------: |
+| 1              | EST12345          | John Smith    |                    | Green Astrophysics | 18/08/2023     | 19/08/2023   | N                   |
+| 2              | EST12345          | John Smith    | Green Astrophysics | Salty Climate      | 19/08/2023     | 20/08/2023   | N                   |
+| 3              | EST12345          | John Smith    | Salty Climate      | Green Astrophysics | 20/08/2023     |              | Y                   |
+
+#### SCD-7 (Hybrid: Surrogate and Natural Key)
+
+An alternative implementation is to place both the surrogate key and the natural key in the **_fact table_**.
+
+This method allows for more flexible links to the dimension, even if **_SCD-2_** has been used instead of **_SCD-6_**.
+
+With **_SCD-7_**, the **_fact table_** contains dual **_FKs_** for a given dimension: one **_SK_** linked to the dimension table where type 2 attributes are tracked, plus the enduring natural key of the dimension linked to the current row of the type 2 dimension to present the current value of the attribute.
+
+**_SCD-7_** offers the same functionality as **_SCD-6_**, but it is achieved through dual keys instead of physically overwriting the current attributes as in **_SCD-6_**. Like other hybrid approaches, the attributes of the current dimension should be labeled differently to minimize confusion.
+
+##### Example of SCD-7
+
+Imagine the following scenario:
+
+Sales (**_fact table_**)
+- Date (**_PK_**)
+- Product Key (**_FK_**)
+- Enduring Product Key (**_DK_**)
+- more **_FKs_**
+- facts
+
+Products (**_dimension table_**)
+- Product Key (**_PK_**)
+- **_SK_**
+- **_DK_**
+- Description
+- Start Date
+- End Date
+- ...
+
+Current Products (**_current dimension table_**)
+- **_DK_**
+- Description
+- ...
+
+#### SCD Summary
+
+| **_SCD_**   | **_Dimension Table_**                         | **_Fact Table_**                                                 |
+| :---------: | :------------------------------------- | :-------------------------------------------------------- |
+| **_SCD-0_** | No changes to attribute value           | Facts associated with the original attribute value         |
+| **_SCD-1_** | Overwrite the attribute value          | Facts associated with the current attribute value          |
+| **_SCD-2_** | Add a new row with the new attribute value | Facts associated with the attribute value when the event occurred |
+| **_SCD-3_** | Add a new column to preserve previous and current values of the attribute | Facts associated with the alternative value of the attribute (previous and current) |
+| **_SCD-4_** | Add a *mini-dimension* containing attributes that change rapidly | Facts associated with attributes that change rapidly take effect when an event occurs |
+|**_SCD-5_** | **_SCD-4_** + **_SCD-1_** = Add the *mini-dimension* (**_SCD-4_**), along with the **_SCD-1_** key overwritten on the base dimension | Facts associated with attributes that change rapidly take effect when the event occurred, in addition to the current attributes that change rapidly |
+| **_SCD-6_** | **_SCD-1_** + **_SCD-2_** + **_SCD-3_** = Add overwritten attributes **_SCD-1_** to the **_SCD-2_** dimension row and overwrite all previous dimension rows | Facts associated with the attribute value when the event occurred, plus the current values |
+| **_SCD-7_** | Add a **_SCD-2_** dimension row with a new attribute value, plus limited display on rows and/or current attribute values | Facts associated with the attribute value when the event occurred, plus the current values |
+
+### Rapidly Changing Dimensions (Rapidly Changing Dimensions - RCD -)
+
+These are dimensions that change (or can change) rapidly over time. **_RCDs_** are generally implemented as **_JUNKDIMs_**.
+
+Handling **_RCDs_** in the **_DWH_** is very challenging due to performance issues. As we have seen, **_SCDs_** are used to maintain the history of changes. However, the problem with **_SCD-2_** is that with every change in the dimension attribute, it adds a new row to the table. If there are dimensions that change frequently, the table becomes larger and can cause serious performance problems. Therefore, using **_SCD-2_** may not be a good decision for implementing rapidly changing dimensions.
+
+##### Example of RCD
+
+Let's consider that in the Customer dimension, we have 1000 rows. On average, each customer changes 10 attributes per year. If we use **_SCD-2_** to manage this scenario, there will be 1000 * 10 = 10000 rows at the end of the year. If the table has millions of rows, it will be very challenging to manage the situation with **_SCD-2_**. Therefore, we will use an **_RCD_** approach.
+
+To implement this, we will use a separate rapidly changing attribute, by implementing a **_JUNKDIM_**.
+
+In the fact table, not all attributes change rapidly. Some attributes may change rapidly, while others do not. The idea here is to separate the attribute that changes rapidly from those that change slowly and move these rapidly changing attributes to another **_JUNKDIM_** table, keeping the slowly changing attribute in the same table. This way, we can manage situations of table size growth.
+
+**Customer (_Dimension Table_)**
+- ID
+- Name
+- City
+- State
+- Gender
+- Income
+- Rating
+- Credit Score
+
+Attributes like ID, Name, City, State, or Gender will not change or change very rarely. In contrast, attributes like Income, Rating, and Credit Score change every month based on the customer's circumstances. Therefore, we need to separate these columns from the customer table; otherwise, we will fill the table if we use **_SCD-2_** in the Customer dimension. We can place these rapidly changing columns in the **_JUNKDIM_** dimension table.
+
+**Customer Junk (_JUNKDIM_)**
+- SK
+- Income
+- Rating
+- Credit Score
+
+The Customer dimension remains as:
+
+**Customer (_Dimension Table_)**
+- ID
+- Name
+- City
+- State
+- Gender
+
+However, we need to link the **_JUNKDIM_** (Customer Junk) and the **_Dimension Table_** (Customer). Additionally, we cannot simply reference the **_JUNKDIM_** by adding its primary key (**_SK_**) to Customer as a foreign key (**_FK_**). Since any changes made to the **_JUNKDIM_** need to be reflected in the **_Dimension Table_**, this obviously increases the Customer data. Instead, we will create another _mini-dimension_ table that acts as a bridge between the **_Dimension Table_** and **_JUNKDIM_**. We can also add columns such as the start and end date to track the change history.
+
+**Customer Mini Dim (_Bridge Dimension - BRIDDIM-_)**
+- ID
+- SK
+- Start Date
+- End Date
+
+**_BRIDDIMs_** allow defining many-to-many relationships between **_fact tables_**. They are necessary to define, for example, the relationship between a pilot and their multiple sponsors (m:n).
+
+This table is only a bridge between two tables and does not require any **_SK_**.
+
+An example of **_RCD_**, when growth is explosive, is Monster Dimensions (**_MONSDIM_**).
+
+### Stacked Dimensions (STACDIM)
+
+**_STACDIM_** is used when two or more dimensions are combined into one dimension. It has one or two attributes and is always **_SCD-0_**.
+
+Examples (type and state): Product type, Customer state, Store type, Security type, etc. All these columns should be stored in their respective dimensions because they are properties of the dimension.
+
+However, there are type and state columns that belong to the **_fact table_**, such as Transaction type or Transaction state. **To combine transaction type and transaction state into one dimension, we create a dummy dimension. We should never use a STACDIM**.
+
+**Using a STACDIM is not recommended. It's wrong to use them, but they exist**. Typically because it was that way in the original system, so we simply copy it to the **_DWH_** (without thinking).
+
+### Deferred Dimension (DEFEDIM)
+
+When loading a record from a **_fact table_**, it's possible that a record from a **_dimension table_** is not yet ready. Technically, it's called a **_lower-level member_** or **_sensitive dimension_**.
+
+### Distorted Dimension (DISTDIM)
+
+A dimension used in many places is called a **_distorted dimension - DISTDIM -_**. It can be used in a single database or in multiple, or in multiple **_fact tables_**, or in multiple **_DM_** or **_DWH_**.
+
+## Some of the Worst Practices When Working with Dimensions and Facts
+
+1. **Not designing the Time dimension in the DWH, expecting the BI tool to do the job**.
+
+2. **Designing the DDM with JUNKDIMs instead of normal fact tables**.
+
+3. **Not creating SHRKDIMs and waiting for the BI tool to do it**.
+
+4. **Not knowing the business well enough, which can lead to neglecting essential CONFDIMs in our DDM**.
+
+5. **Not defining RPLYDIMs properly due to lack of knowledge about some point in our project's pipeline**.
+
+6. **Defining DEGEDIMs**.
+
+7. **We should avoid OUTGDIMs in our DDM**.
+
+8. **If you trust users (Directors or Managers), STATDIMs will be missing in your DDM**.
+
+9. **Considering dimension changes as SCD-0**.
+
+10. **Considering SCD-2 instead of considering possible RCDs**.
+
+11. **If you come across a STACDIM in the DDM, then you have made a mistake in dimensional analysis**.
+
+## Conclusions
+
+Designing the **_BI_** solution or any other data analysis visualization is a small part of the work, equivalent to the visible part of an iceberg (we only see 20% of the work). This is what the user perceives.
+
+Designing **_fact tables_** and **_dimension tables_** is a small but important part of the work, and it is not perceived by users. As Data Engineers, we must perform many other tasks, such as maximizing performance, designing a **data change capture mechanism** (**_CDC_**), which ensures that data is loaded incrementally, if necessary.
+
+In complex **_ETL_** processes, we may need frequent updates according to business needs. **We may have to add or remove fields, change data types, modify the SCD applied to a table, etc.** Making these changes to queries not only takes a lot of time but is also prone to errors.
+
+**_VERY IMPORTANT!_**: **More often than in OLTP databases, with any minor change requested by users, and before we realize it, we may have disrupted the existing pipeline. It is advisable to move changes to the DWH as much as possible and verify the impact before the data visualization phase**.
+
+If at this point, we think that most of the hard work is done, we must consider that **companies are constantly looking to modernize and improve their data processes**. The day may come when our company decides to switch to a cloud-based data storage platform from an on-premise database.
+
+**_VERY IMPORTANT!_**: To prevent this problem, **first, we need to create a new architecture on the new platform**, then **we need to rewrite all ETL processes to reconfigure the new pipelines**.
+
+Imagine that, for whatever reason, we had to work without a **_DWH_**, directly with **_Power BI_**, and now we want to implement **_ETL processes_** with Pentaho Data Integration (**_PDI_**). In that case, we first need to design the dimension and fact tables in the **_DWH_**, then implement the **_ETL processes_**, and finally re-implement the visualization in **_Power BI_**. This involves redesigning the entire pipeline and possibly adopting a collaborative work strategy if it wasn't adopted before.
+
+The **roles required** to address these tasks range from **Data Analysts** to **Data Engineers** and can be of great complexity.
+
+**In other words, the impact of changes can be so significant that we may have to go through the entire process again from scratch!** Therefore, **the level of complexity involved can become very high, even for technical users. It is absolutely essential that these technical professionals have certification (not necessarily a university degree, but recognized) as Data Analysts and/or Data Engineers**.
+
+**Conclusion: The analysis and engineering involved must be carried out by qualified technicians, equipped with the appropriate resources and guided, in terms of the business, by adequately qualified and motivated users**.
+
+## Did you find the article interesting?
+
+If you have any questions regarding what has been presented in this article, please let me know in the comments.
+
+Please, if you have enjoyed the content of this article, leave a comment or a "like." Furthermore, if you believe it is good enough or can help other users on the network, share the post on this platform. This way, we can all together democratize knowledge and perhaps assist other people in need.
+
+## Picture list
+
+- **pic001**: From "Data Warehousing and OLAP modeling" Platzi course.
+
+## Disclaimer
+
+**_Platzi_** (formerly Mejorando.la) is a LATAM online education platform. It was founded in 2011 by the Colombian engineer **Freddy Vega** and the Guatemalan computer scientist **Christian Van Der Henst**. ([Wikipedia](https://es.wikipedia.org/wiki/Platzi))
+
+## ChatGPT usage
+
+**_ChatGPT 3.5 Usage_**
+
+This project has been verified for spelling, syntax, and content using [**_ChatGPT 3.5_**](https://chat.openai.com/chat)  
+
+Reference:  
+[OpenAI. (2023). ChatGPT (10/03/2023 version) \[Large Language Model\]](https://chat.openai.com/chat)

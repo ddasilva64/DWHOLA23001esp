@@ -3,3 +3,8 @@ traduce lo siguiente a Español de España y genera el fihero md de la traducci�
 translate next to English and generate translation md file
 
 tradueix el següent al català i genera el fitxer md de la traducció
+
+_________________________________
+
+
+

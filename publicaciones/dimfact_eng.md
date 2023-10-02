@@ -424,4 +424,33 @@ With this structure, we could answer questions like:
 
 **_JUNKDIMs_** allow us to simplify the **_dm_** and optimize space, as we wouldn't have to create separate dimensions for each related attribute (**_FK_**).
 
+### Degenerate Dimensions (DEGEDIM)
 
+These are found as attributes in the **_fact table_** and have meaning from an analytical perspective. They contain low cardinality information formed by dichotomous relationships. Often, they contain only one attribute and therefore a separate table is not usually created for them.
+
+In other words, they are attributes that cannot be dimensions or facts (metrics) but require analysis. All these attributes, when removed from the fact table, are moved to **_DEGEDIMs_**.
+
+For example, attributes like order number, invoice number, patient gender, etc., can be considered as attributes of **_DEGEDIMs_**.
+
+An invoice may have a customer name attribute, but it already belongs to the Customer **dimension table**.
+
+Therefore, **_DEGEDIM_** is a part of the **fact table** that is not a metric but still remains a dimension, which is contradictory.
+
+It can be defined as **_DEGEDIM_** for an attribute in a **_fact table_** that acts as a dimension but does not actually join with any dimension (it is not an **_FK_** of another table) since its attributes have already been included in other analysis dimensions.
+
+**Note**: Defining **_DEGEDIMs_** outside of a **fact table** is an error.
+
+#### Example of Degenerate Dimensions (DEGEDIM)
+
+Let's assume we have a Sales database that includes a **fact table**, which records product sales. In this **_fact table_**, we have the following information:
+
+- Order number
+- Date
+- Product
+- Quantity
+- Price
+- Online sale
+
+Now, let's imagine that Sales can be online or not, so this attribute has low cardinality, is not aggregable, and is not an **_FK_** either. On the other hand, the order number of the Sale has low cardinality compared to Sales (one sale has more than one order), and it is also not aggregable nor an **_FK_**.
+
+Therefore, in the **_fact table_** (Sales), the order number and online sale are **_DEGEDIMs_**, and they will only serve us to be clear that we have not made a mistake, but we will not build a separate dimension for them.

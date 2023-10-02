@@ -433,17 +433,34 @@ Les **_JUNKDIMs_** ens permeten simplificar el **_dm_** i optimitzar l'espai, ja
 
 ### Dimensions degenerades (Degenerate Dimensions - DEGEDIM -)
 
-Es troben com a atributs a la **_taula de fets_**, tenen significat des del punt de vista de l'anàlisi. Contenen informació de baixa cardinalitat formada per relacions dicotòmiques. Freqüentment, només contenen un atribut i per això, no s'acostuma a crear una taula a part. 
+Es troben com a atributs a la **_taula de fets_**, tenen significat des del punt de vista de l'anàlisi. Contenen informació de baixa cardinalitat formada per relacions dicotòmiques. Sovint, només contenen un atribut i, per tant, no sol crear-se una taula separada.
 
-Es a dir, són atributs que no poden ser dimensions (mètriques) ni fets (mesures) però necessiten anàlisi. Tots aquests atributs si es treuen de la taula de fets es traslladen a **_DEGEDIMs_**.
+Dit d'una altra manera, són atributs que no poden ser dimensions, ni fets (mètriques), però requereixen anàlisi. Tots aquests atributs, si s'eliminen de la taula de fets, es traslladen a **_DEGEDIMs_**.
 
-Per exemple, podem considerar el número de comanda, el número de factura, el gènere d'un pacient etc., com a atributs de **_DEGEDIMs_**.
+Per exemple, es poden considerar el número de comanda, el número de factura, el gènere d'un pacient, etc., com a atributs de **_DEGEDIMs_**.
 
-Una factura pot tenir un atribut de nom de client, però ja forma part de la **_taula de dimensió_** Client. 
+Una factura pot tenir un atribut de nom de client, però ja forma part de la **taula de dimensió** Client.
 
-Una **_DEGEDIM_** és una part de la **_taula de fets_**, que no és una mesura, però que no deixa de ser una dimensió, la qual cosa es contradictòria.
+Per tant, **_DEGEDIM_** és una part de la **taula de fets** que no és una mètrica, però que continua sent una dimensió, la qual cosa és contradictòria.
 
-**_Avís!_**: Definir **_DEGEDIMs_** fora d'1 **_taula de fets_** és un error.
+Es pot definir com a **_DEGEDIM_** a un atribut d'una **_taula de fets_** que actua com a dimensió, però que realment no s'uneix amb cap altra dimensió (no és una **_FK_** d'una altra taula), ja que els seus atributs ja han estat inclosos en altres dimensions d'anàlisi.
+
+**Avís!**: Definir **_DEGEDIMs_** fora d'una **taula de fets** és un error.
+
+#### Exemple de dimensions degenerades (Degenerate Dimensions - DEGEDIM -)
+
+Suposem que tenim una BD de Vendes que inclou una **taula de fets**, que registra les Vendes de productes. En aquesta **_taula de fets_**, tenim la següent informació:
+
+- Número de comanda
+- Data
+- Producte
+- Quantitat
+- Preu
+- Venda en línia
+
+Ara, imaginem que les Vendes poden ser en línia o no, per tant, aquest atribut té baixa cardinalitat, no és agregable i tampoc és una **_FK_**. D'altra banda, el número de comanda de la Venda té baixa cardinalitat en relació a les Vendes (una venda té més d'una comanda), a més no és agregable, ni és una **_FK_**.
+
+Per tant, a la **_taula de fets_** (Vendes), el número de comanda i la venda en línia són **_DEGEDIMs_** i només ens serviran per tenir clar que no ens hem equivocat, però no construirem una dimensió a part amb ells.
 
 #### Dimensions estabilizadores (Outrigger Dimensions - OUTGDIM -)
 

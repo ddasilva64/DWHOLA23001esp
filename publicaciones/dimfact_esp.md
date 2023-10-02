@@ -432,5 +432,34 @@ Con esta estructura, podríamos responder preguntas como:
 
 Las **_JUNKDIMs_** nos permiten simplificar el **_dm_** y optimizar el espacio, ya que no tendríamos que crear dimensiones separadas para cada atributo relacionado (**_FK_**).
 
+### Dimensiones degeneradas (Degenerate Dimensions - DEGEDIM -)
 
+Se encuentran como atributos en la **_tabla de hechos_**, tienen significado desde el punto de vista del análisis. Contienen información de baja cardinalidad formada por relaciones dicotómicas. Frecuentemente, solo contienen un atributo y, por lo tanto, no se suele crear una tabla aparte.
+
+Es decir, son atributos que no pueden ser dimensiones, ni hechos (métricas), pero requieren análisis. Todos estos atributos, si se eliminan de la tabla de hechos, se trasladan a **_DEGEDIMs_**.
+
+Por ejemplo, se pueden considerar el número de pedido, el número de factura, el género de un paciente, etc., como atributos de **_DEGEDIMs_**.
+
+Una factura puede tener un atributo de nombre de cliente, pero ya forma parte de la **tabla de dimensión** Cliente.
+
+Con lo cual, **_DEGEDIM_** es una parte de la **tabla de hechos** que no es una métricas, pero que sigue siendo una dimensión, lo que es contradictorio.
+
+Se puede definir como **_DEGEDIM_** a un atributo de una **_tabla de hechos_** que actúa como dimensión, pero que realmente no se une con ninguna dimensión (no es **_FK_** de otra tabla), ya que sus atributos ya han sido incluidos en otras dimensiones de análisis. 
+
+**¡Aviso!**: Definir **_DEGEDIMs_** fuera de una **tabla de hechos** es un error.
+
+#### Ejemplo de dimensiones degeneradas (Degenerate Dimensions - DEGEDIM -)
+
+Supongamos que tenemos una BD de Ventas que incluye una **tabla de hechos**, que registra las Ventas de productos. En esta **_tabla de hechos_**, tenemos la siguiente información:
+
+- Número de pedido
+- Fecha
+- Producto
+- Cantidad
+- Precio
+- Venta online
+
+Ahora, imaginemos que las Ventas pueden ser online o no serlo, por lo tanto, este atributo es de baja cardinalidad, no es agregable y tampoco es **_FK_**. Por otra parte, el número de pedido de la Venta tiene baja cardinalidad en relación a las Ventas (una venta tiene más de un pedido), además no es agregable, ni es **_FK_**.
+
+Por lo tanto, en la **_tabla de hechos_** (Ventas), número de pedido y venta online son **_DEGEDIMs_** y solo nos servirán para tener claro que no nos hemos equivocado, pero no construiremos una dimensión a parte con ellos.
 

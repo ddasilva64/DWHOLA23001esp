@@ -462,30 +462,30 @@ Ara, imaginem que les Vendes poden ser en línia o no, per tant, aquest atribut 
 
 Per tant, a la **_taula de fets_** (Vendes), el número de comanda i la venda en línia són **_DEGEDIMs_** i només ens serviran per tenir clar que no ens hem equivocat, però no construirem una dimensió a part amb ells.
 
-#### Dimensions estabilizadores (Outrigger Dimensions - OUTGDIM -)
+### Dimensions estabilitzadores (Outrigger Dimensions - OUTGDIM -)
 
-Dimensions que fan referència a altres dimensions mitjançant claus externes (subdimensions). 
+Dimensions que fan referència a altres dimensions mitjançant **_FKs_** (subdimensions).
 
-Les **_OD_** sovint es consideren com un antipatró de **_DWH_** i s'acostuma a considerar una pràctica millor, utilitzar algunes **_taules de fets_** que relacionin les dues dimensions.  
+Les **_OUTGDIM_** sovint es consideren com un antipatró de **_DWH_** i sol sovint considerar-se una millor pràctica utilitzar algunes **_taules de fets_** que relacionin les dues dimensions.
 
-Un exemple seria considerar Vendes, Productes i Categories. 
+**_¡Avís!_**: Hem de procurar evitar les **_OUTGDIM_** en el nostre **_DDM_**.
 
-Podem considerar-les com:
+#### Exemple de dimensions estabilitzadores (Outrigger Dimensions - OUTGDIM -)
+
+Considerem Vendes, Productes i Categories.
 
 - **_Taula de fets_**: Vendes.
-- **_Taula de dimensió_**: Productes **_OUTGDIM_** (conté el **_FK_** de la Categoria).  
-- *Taula de subdimensió*: Categories (conté el **_PK_** de la Categoria).
+- **_Taula de dimensió_**: Productes **_OUTGDIM_** (conté la **_FK_** de la Categoria).
+- **_Taula de subdimensió_**: Categories (conté la **_PK_** de la Categoria).
 
-Un altre manera de vure-les és com:
+Una altra manera de veure-les és com:
 
-- **_Taula de fets_**: Vendes
-- **_Taula de dimensió_**: Productes. Cada producte conté la seva Categoria incorporada.  
+- **_Taula de fets_**: Vendes.
+- **_Taula de dimensió_**: Productes. Cada producte conté la seva Categoria incorporada.
 
-El segon model està des normalitzat i és una millor solució a un **_DDM_**.
+El segon model està **desnormalitzat** i és **una millor solució** per a un **_DDM_**.
 
-**_Avís!_**: Hem d'intentar evitar les **_OUTGDIM_** al nostre **_DDM_**.
-
-#### Dimensions estàtiques (Static Dimensions - STATDIM -)
+### Dimensions estàtiques o fixes (Static Dimensions - STATDIM -)
 
 Venen del no-res, són dimensions que no existeixen la BD **_OLTP_** d'origen, com a entitats.  
 
@@ -499,7 +499,13 @@ Una dimensió que no existeix a la **_OLTP_**, no necessàriament han de ser una
 
 **_Avís!_**: No hem de confiar en els usuaris (Directors o Gerents), si manquen entitats a la BD **_OLTP_** (que es transformaran en dimensions al **_DDM_**), hem d'afegir-les, abans del **_DWH_** i s'han de relacionar al **_DWH_**.
 
-#### Dimensions que canvien lentament (Slowly Changing Dimensions - SCD -)
+#### Exemple de dimensions estàtiques o fixes (Static Dimensions - STATDIM -)
+
+Un exemple que sempre tindrem és la **_taula de dimensió_** de Temps, un altre són els codis d'estat.
+
+Altres exemples (no estàtics, tot i que no existeixen a la BD **_OLTP_**), poden ser qualsevol entitat que no existeix a la BD **_OLTP_**.
+
+### Dimensions que canvien lentament (Slowly Changing Dimensions - SCD -)
 
 Una **_SCD_** a un **_DWH_** és una dimensió que conté dades relativament estàtiques que poden canviar lentament i de manera imprevisible, en lloc de seguir un horari regular. Alguns exemples de dimensions típiques que canvien lentament són entitats com Localitzacions Geogràfiques, Clients o Noms de Productes. ([Wikipedia](https://en.wikipedia.org/wiki/Slowly_changing_dimension)).  
 
@@ -510,19 +516,19 @@ _Dimensió (imatge 001)_
 
 <p><br></p>
 
-##### Tipus de SDC
+#### Tipus de SDC
 
 A una BD dimensional, els **_SCDs_** són aquelles dimensions que canvien amb el temps, però no necessàriament de manera constant o previsible. **Per exemple, a una taula de dades de Clients, l'adreça del client pot canviar amb el temps, però no tots els clients canvien l'adreça a la mateixa velocitat. Alguns clients poden canviar l'adreça cada mes, mentre que altres poden mantenir la mateixa adreça durant anys**.
 
 La gestió adequada de les **_SCD_** és important per mantenir l'exactitud i la integritat de les dades dimensionals en una base de dades, ja que permet als usuaris realitzar anàlisis històriques i comparar dades al llarg del temps.
 
-##### Elecció del tipus de SCD
+#### Elecció del tipus de SCD
 
 La elecció del tipus de **_SCD_** a utilitzar depèn de les necessitats específiques del **_DWH_** i les necessitats d'anàlisi. És important tenir en compte factors com la importància de les dades històriques, la freqüència dels canvis a les dimensions i les implicacions d'emmagatzematge i rendiment de cada enfocament.
 
 Les **_SCDs_** són un aspecte crucial dels **_DWHs_** ja que permeten representar les dades al llarg del temps, facilitant així un anàlisi i informes històrics precisos.
 
-##### SDC-0
+#### SDC-0
 
 **_SCD-0_** no té en compte la gestió dels canvis històrics. S'aplica quan no es canvia mai la informació, es dir, els atributs al **_SCD-0_** mai canvien i s'assignen a atributs que tenen **valors** duradors o que es descriuen com a "**originals**".  
 
@@ -532,7 +538,7 @@ S'aplica a la majoria dels atributs de les dimensions.
 
 El que vol dir, tot plegat, és que, **com que a la taula original no hi ha canvis, aleshores tampoc n'hi ha en la dimensió**.
 
-##### SCD-1
+#### SCD-1
 
 **_SCD-1_** no guarda històrics. La nova informació sobreescriu l'antiga sempre. Principalment la sobreescriptura es fa per errors de qualitat de dades. Aquest tipus de dimensions és fàcil de mantenir i es fa servir quan la informació històrica no és important. És a dir, **és apropiat quan les dades històriques no són importants o quan es poden recuperar d'altres fonts**.  
 
@@ -568,7 +574,7 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 
 El que vol dir, tot plegat, és que, malgrat que hi hagi canvis, **cada vegada s'importen tots els registres de la taula transaccional (esborrant els que existien abans a la taula dimensional)**. Es a dir, els registres a la taula dimensional són els "**originals**" a la taula transaccional, sense canvis.
 
-##### SCD-2
+#### SCD-2
 
 **_SCD-2_** guarda la informació històrica al **_DWH_**.
 
@@ -607,7 +613,7 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | 1                | EST12345           | Jordi Ferrer    | Marketing    | 01/01/2020     | 01/01/2020  | 1          | false      |
 | 2                | EST12345           | Jordi Ferrer    | Enginyeria   | 02/01/2020     |             | 2          | True       |
 
-##### SCD-3
+#### SCD-3
 
 **_SCD-3_** guarda la informació històrica al **_DWH_**.
 
@@ -643,7 +649,7 @@ El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 | :--------------: | :----------------: | :-------------- | :-----------------: | :---------------: |
 | 1                | EST12345           | Jordi Ferrer    | Marketing           | Enginyeria        |
 
-##### SCD-4 (història separada)
+#### SCD-4 (història separada)
 
 **_SCD-4_** és coneix habitualment com a taules històriques. 
 
@@ -717,7 +723,7 @@ etc.
 
 Un repte que s'ens presente és quan la *mini-dimensió* comença a canviar ràpidament. Aleshores es poden introduir múltiples *mini-dimensions* per gestionar aquests escenaris. Si cap registre de fets ha d'associar la dimensió principal i la *mini-dimensió*, es pot utilitzar una **_taula de fets_** *sense fets* per associar la dimensió principal i la *mini-dimensió*.
 
-##### SCD-5
+#### SCD-5
 
 **_SCD-5_** es basa en la *mini-dimensió* **_SCD-4_** incrustant una clau de *mini-dimensió* del "*perfil actual*" a la dimensió base que es sobreescriu com a atribut **_SCD-1_**. Aquest enfocament, anomenat **_SCD-5_** perquè **4 + 1 = 5**, permet accedir als valors dels atributs de *mini-dimensió* assignats actualment conjuntament amb els altres de la dimensió base sense enllaçar-los mitjançant una **_taula de fets_**. Normalment representem la dimensió base i l'estabilizador del perfil de *mini-dimensió* actual com una taula única a la capa de presentació. Els atributs dels estabilizadors haurien de tenir noms de columnes diferents, com ara "Nivell d'ingressos actual", per diferenciar-los dels atributs de la *mini-dimensió* vinculada a la **_taula de fets_**. L'equip d'ETL ha d'actualitzar/sobreescriure la referència de *mini-dimensió* **_SCD-1_**, sempre que la *mini-dimensió* actual canviï amb el temps.
 
@@ -748,7 +754,7 @@ Vista de la *mini-dimensió* com estabilitzador
 - Puntuació de la freqüència de compres actual
 - Nivell ingressos actual
 
-##### SCD-6 (híbrida)
+#### SCD-6 (híbrida)
 
 **_SCD-6_** combina els enfocaments dels tipus 1, 2 i 3 (**1+2+3=6**). Consisteix a considerar una **_SCD-1_** i afegir un parell de columnes addicionals que indiquen el rang temporal de validesa duna de les columnes de la taula. Si bé el disseny és complex, entre els seus beneficis podem destacar que **redueix la mida de les consultes temporals**. Hi ha una altra variant per a aquest tipus de dimensió, que consisteix a tenir versions del registre de la dimensió (numerats de 0 a n+1, on 0 sempre és la versió actual).
 
@@ -799,7 +805,7 @@ Taula de dimensió (després de l'ETL)
 | 2                | EST12345           | Jordi Ferrer    | Astrofísica verda   | Clima salat       | 19/08/2023     | 20/08/2023     | N                  |
 | 3                | EST12345           | Jordi Ferrer    | Clima salat         | Astrofísica verda | 20/08/2023     |                | Y                  |
 
-##### SCD-7 (Híbrid: clau subrogada i natural)
+#### SCD-7 (Híbrid: clau subrogada i natural)
 
 Una implementació alternativa és col·locar tant la clau substituta com la clau natural a la **_taula de fets_**.   
 
@@ -832,7 +838,7 @@ Productes actuals (**_taula de dimensió actual_**)
 - Descripció
 - ...
 
-##### Resum SCD's
+#### Resum SCD's
 
 | **_SCD_**   | Taula de dimensió                           | Taula de fets                                                                                                         |
 | :---------: | :------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------- |
@@ -845,7 +851,7 @@ Productes actuals (**_taula de dimensió actual_**)
 | **_SCD-6_** | **_SCD-1_** + **_SCD-2_** +**_SCD-3_** = Afegeix atributs sobreescrits **_SCD-1_** a la fila de dimensions **_SCD-2_** i sobreescriu totes les files de dimensions anteriors | Els fets associats al valor de l'atribut quan es va produir el fet, més els valors actuals |
 | **_SCD-7_** | Afegeix una fila de dimensió **_SCD-2_** amb un valor d'atribut nou, a més de la visualització limitada a les files i/o els valors d'atribut actuals | Els fets associats amb el valor de l'atribut quan es va produir el fet, més els valors actuals |
 
-#### Dimensions que canvien ràpidament (Rapidly Changing Dimensions - RCD -)
+### Dimensions que canvien ràpidament (Rapidly Changing Dimensions - RCD -)
 
 Són dimensions que canvien (o poden canviar) ràpidament amb el temps. Les **_RCD_** s'implementen generalment com a **_JUNKDIM_**.
 
@@ -900,7 +906,7 @@ Aquesta taula és només un pont entre dues taules i no requereix cap **_SK_**.
 
 Un exemple de RCD, quan els creixements són explosius, són les Dimensions monstre (Monster Dimensions - **_MONSDIM_** -)
 
-#### Dimensions apilades (Stacked Dimensions - STACDIM -)
+### Dimensions apilades (Stacked Dimensions - STACDIM -)
 
 **_STACDIM_** s'utilitza quan dues o més dimensions es combinen en una dimensió. Té un o dos atributs i sempre és **_SCD-0_**.
 
@@ -910,11 +916,11 @@ Tot i això, hi ha columnes de tipus i estat que són propietat de la **_taula d
 
 **No es recomana fer servir una STACDIM. Està malament fer-les servir, però existeixen**. Normalment perquè era així al sistema d'origen, de manera que simplement ho copiem al **_DWH_** (sense reflexionar).
 
-#### Dimensió diferida (Deferred Dimension - DEFEDIM -)
+### Dimensió diferida (Deferred Dimension - DEFEDIM -)
 
 Quan es carrega un registre d'1 **_taula de fets_**, és possible que un registre d'1 **_taula de dimensió_** encara no estigui preparat. Tècnicament s'anomena **_membre inferior_** o **_dimensió sensible_**.
 
-#### Dimensió distorsionada (Distorted Dimension - DISTDIM -)
+### Dimensió distorsionada (Distorted Dimension - DISTDIM -)
 
 Una dimensió que s'utilitza en molts llocs s'anomena **_dimensió distorsionada - DISTDIM -_**. Es pot utilitzar en una sola BD o en varies, o en múltiples **_taules de fets_**, o en múltiples **_DM_** o **_DWH_**.
 
@@ -944,17 +950,27 @@ Una dimensió que s'utilitza en molts llocs s'anomena **_dimensió distorsionada
 
 ## Conclusions 
 
-Dissenyar les dimensions i els processos ETL és no més una part petita de la feina, però important.
+Dissenyar la solució **_BI_** o qualsevol altre visualització de l'anàlisi de dades, **és una part ínfima de la feina, seria equivalent a la part visible d'1 ice-berg (sols veiem el 20% de la feina)**. Just això és el que perceb l'usuari.
 
-Per exemple, per maximitzar el rendiment, necessitarem un **mecanisme de captura de dades modificades** (**_CDC_**), que ens ens assegurari que **les dades es carreguin de forma incremental**.
+>>>>>>>>> posar imatge
 
-Als ETL complexos necessitarem actualitzacions freqüents segons les necessitats del negoci. **És possible que haguem d'afegir o eliminar camps, canviar certs tipus de dades, modificar el SCD aplicat a un camp, etc**. Fer aquests canvis a les consultes no només porta molt de temps sinó que també és extremadament propens a errors. **Abans que ens adonem, és possible que haguem fet malbé un pipeline existent en implementar un canvi menor en el mecanisme de càrrega**.
+Dissenyar les **_taules de fets_** i les **_taules de dimensions_**, és una part petita de la feina, però important i no és percebuda pels usuaris. Com a Enginnyiers de Dades hem de realitzar altres moltes tasques, com ara, per maximitzar el rendiment, disenyar un **mecanisme de captura de dades modificades** (**_CDC_**), que ens ens assegurari que **les dades es carreguin de forma incremental, si s'escau**.
 
-Tot i això, encara sentirem que la major part del treball dur està fet. Però, **les empreses busquen constantment modernitzar i millorar els seus processos de dades**. Pot arribar el dia en què la nostra empresa decideixi canviar de plataforma d'emmagatzematge de dades. Suposem que han decidit passar d'1 BD on-premise a una plataforma al núvol.
+Als **_ETL_** complexos, pr exemple, necessitarem actualitzacions freqüents segons les necessitats del negoci. **És possible que haguem d'afegir o eliminar camps, canviar tipus de dades, modificar el SCD aplicat a una taula, etc**. Fer aquests canvis a les consultes no només implica molt de temps, sinó que també és molt propens a generar errors. 
 
-És a dir, **primer, hem de crear una nova arquitectura a la nova plataforma**, després, **reescriurem totes les consultes per configurar pipelines natives a les noves taules de destí**. 
+**_MOLT IMPORTANT!_**: **Amb més freqüència que a les BD OLTP, amb qualsevol canvi menor demanat pels usuaris i abans que ens adonem, és possible que haguem fet malbé el pipeline existent. És recomenable traslladar els canvis al DWH, tant com es pugui i verificar l'impacte, abans de la fase de visualització de les dades**.
 
-**L'impacte dels canvis pot ser tan gran que** possiblement haurem de fer tot el procés novament, des de zero!. Aleshores, **el nivell de complexitat involucrat pot esdevenir molt alt, fins i tot per als usuaris tècnics**. Imprescindible que aquests tècnics tinguin certificació (no necessariament universitaria, però si reconeguda) com a Analistes de Dades i/o Enginyers de Dades.
+Si en aquest punt pensem que la major part del treball dur està fet, hem de pensar però, **que les empreses busquen constantment modernitzar i millorar els seus processos de dades**. Pot arribar el dia en què la nostra empresa decideixi canviar de plataforma d'emmagatzematge de dades. Suposem que han decidit passar d'1 BD on-premise a una plataforma al núvol. 
+
+**_MOLT IMPORTANT!_**: Per previndre aquest problema, **primer, hem de crear una nova arquitectura a la nova plataforma**, després, **he de reescriure tots els processos ETL per reconfigurar els nous pipelines**. 
+
+Imaginem que, per les circumstancies que suigui hem hagut de treballar sense **_DWH_**, directament amb **_Power BI_** i que volem implementar processos **_ETL_** amb Pentaho Data Integration (**_PDI_**), aleshores, primer hem de disenyar les taules de dimensions i fets al **_DWH_**, després hem d'implementar els processos **_ETL_** i finalment hem de tornar a implementar la visualització en **_Power BI_**. Això implica redisenyar tot el pipeline i possiblement adoptar una estratègia de treball col·laboratiu, si no s'havia adoptat abans.
+
+Els **rols necessaris** per abordar aquestes tasques van des de l'**Analistes de Dades** a **Enginyers de Dades** i poden ser d'una gran complexitat.
+
+<<<< possar imatge >>>>
+
+**És a dir, l'impacte dels canvis pot ser tan gran que possiblement haurem de fer tot el procés novament, des de zero!**. Aleshores, **el nivell de complexitat involucrat pot esdevenir molt alt, fins i tot pels usuaris tècnics. És absolutament imprescindible que aquests tècnics tinguin certificació (no necessariament universitaria, però si reconeguda) com a Analistes de Dades i/o Enginyers de Dades**.
 
 **Conclusió: L'anàlisi i enginyeria implicats l'han de desenvolupar tècnics qualificats, dotats dels mitjans adequats i assesorats, en lo que al negoci es refereix, per usuaris prou qualificats i motivats**.
 

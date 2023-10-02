@@ -463,3 +463,27 @@ Ahora, imaginemos que las Ventas pueden ser online o no serlo, por lo tanto, est
 
 Por lo tanto, en la **_tabla de hechos_** (Ventas), número de pedido y venta online son **_DEGEDIMs_** y solo nos servirán para tener claro que no nos hemos equivocado, pero no construiremos una dimensión a parte con ellos.
 
+### Dimensiones estabilizadoras (Outrigger Dimensions - OUTGDIM -)
+
+Dimensiones que hacen referencia a otras dimensiones mediante **_FKs_** (subdimensiones).
+
+Las **_OUTGDIM_** a menudo se consideran como un antipatrón de **_DWH_** y suele considerarse una práctica mejor utilizar algunas **_tablas de hechos_** que relacionen las dos dimensiones.
+
+**_¡Aviso!_**: Debemos intentar evitar las **_OUTGDIM_** en nuestro **_DDM_**.
+
+#### Ejemplo de dimensiones estabilizadoras (Outrigger Dimensions - OUTGDIM -)
+
+Consideremos Ventas, Productos y Categorías.
+
+- **_Tabla de hechos_**: Ventas.
+- **_Tabla de dimensión_**: Productos **_OUTGDIM_** (contiene la **_FK_** de la Categoría).
+- **_Tabla de subdimensión_**: Categorías (contiene la **_PK_** de la Categoría).
+
+Otra manera de verlas es como:
+
+- **_Tabla de hechos_**: Ventas
+- **_Tabla de dimensión_**: Productos. Cada producto contiene su Categoría incorporada.
+
+El segundo modelo está **desnormalizado** y es **una mejor solución** para un **_DDM_**.
+
+

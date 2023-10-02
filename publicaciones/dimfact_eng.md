@@ -454,3 +454,28 @@ Let's assume we have a Sales database that includes a **fact table**, which reco
 Now, let's imagine that Sales can be online or not, so this attribute has low cardinality, is not aggregable, and is not an **_FK_** either. On the other hand, the order number of the Sale has low cardinality compared to Sales (one sale has more than one order), and it is also not aggregable nor an **_FK_**.
 
 Therefore, in the **_fact table_** (Sales), the order number and online sale are **_DEGEDIMs_**, and they will only serve us to be clear that we have not made a mistake, but we will not build a separate dimension for them.
+
+### Outrigger Dimensions (OUTGDIM)
+
+Dimensions that reference other dimensions through **_FKs_** (subdimensions).
+
+**_OUTGDIM_** are often considered an antipattern in **_DWH_** and it is usually considered a better practice to use some **_fact tables_** that relate the two dimensions.
+
+**_Warning!_**: We should try to avoid **_OUTGDIM_** in our **_DDM_**.
+
+#### Example of Outrigger Dimensions (OUTGDIM)
+
+Let's consider Sales, Products, and Categories.
+
+- **_Fact Table_**: Sales.
+- **_Dimension Table_**: Products **_OUTGDIM_** (contains the **_FK_** of the Category).
+- **_Subdimension Table_**: Categories (contains the **_PK_** of the Category).
+
+Another way to view them is as:
+
+- **_Fact Table_**: Sales.
+- **_Dimension Table_**: Products. Each product contains its embedded Category.
+
+The second model is **denormalized** and is **a better solution** for a **_DDM_**.
+
+

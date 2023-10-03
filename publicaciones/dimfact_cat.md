@@ -562,7 +562,7 @@ Creem un Id_Estudiant que és una clau substituta o subrogada -**_SK_**-, que t�
 | :--------------: | :----------------: | :-------------  | :----------: |
 | 1                | EST12345           | Jordi Ferrer    | Màrqueting   |
 
-El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
+El dia 2 el Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 
 **_Taula transaccional en el moment del canvi de Facultat (dia 2)_**
 
@@ -604,7 +604,7 @@ Imaginem el mateix exemple anterior però volem desar dades històriques.
 | :--------------: | :----------------: | :-------------- | :----------: | :------------: | :---------: | :--------: | :--------: |
 | 1                | EST12345           | Jordi Ferrer    | Marketing    | 01/01/2020     |             | 1          | True       |
 
-El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
+El dia 2 el Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 
 **_Taula transaccional en el moment del canvi de Facultat (dia 2)_**
 
@@ -643,7 +643,7 @@ Imaginem el mateix exemple anterior però volem desar dades històriques.
 | :--------------: | :----------------: | :-------------- | :-----------------: | :---------------: |
 | 1                | EST12345           | Jordi Ferrer    |                     | Marketing         |
 
-El dia 2 Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
+El dia 2 el Jordi Ferrer canvia de Facultat a Enginyeria (s'ho ha repensat).
 
 **_Taula transaccional en el moment del canvi de Facultat (dia 2)_**
 
@@ -780,11 +780,11 @@ Taula transaccional
 
 Taula de dimensió (després de l'**_ETL_**)
 
-Ens adonem, en l'**_ETL_**, que l'Astrofísica Blava és poc intel·ligent. Tothom sap que l'Astrofísica és verda.
+Ens adonem, en l'**_ETL_**, que l'Astrofísica Blava és poc intel·ligent. Tothom sap que l'Astrofísica és Verda.
 
 | **Id_Estudiant** | **Codi_Estudiant** | **Nom Complet** | **Facultat_antiga** | **Facultat_nova** | **Data_inici** | **Data_final** | **Facultat_actual** |
 | :--------------: | :----------------: | :-------------- | :-----------------: | :---------------: | :------------: | :------------: | :-----------------: |
-| 1                | EST12345           | Jordi Ferrer    |                     | Astrofísica verda | 18/08/2023     |                | N                   |
+| 1                | EST12345           | Jordi Ferrer    |                     | Astrofísica Verda | 18/08/2023     |                | N                   |
 
 **_Canvi de Facultat a Clima Salat_**
 
@@ -798,24 +798,24 @@ Taula de dimensió (després de l'ETL)
 
 | **Id_Estudiant** | **Codi_Estudiant** | **Nom Complet** | **Facultat_antiga** | **Facultat_nova** | **Data_inici** | **Data_final** | **Facultat_actual** |
 | :--------------: | :----------------: | :-------------- | :-----------------: | :---------------: | :------------: | :------------: | :-----------------: |
-| 1                | EST12345           | Jordi Ferrer    |                     | Astrofísica verda | 18/08/2023     | 19/08/2023     | N                   |
-| 2                | EST12345           | Jordi Ferrer    | Astrofísica verda   | Clima salat       | 19/08/2023     |                | Y                   |
+| 1                | EST12345           | Jordi Ferrer    |                     | Astrofísica Verda | 18/08/2023     | 19/08/2023     | N                   |
+| 2                | EST12345           | Jordi Ferrer    | Astrofísica Verda   | Clima salat       | 19/08/2023     |                | Y                   |
 
-**_Canvi de Facultat, de nou, a Astrofísica verda_**
+**_Canvi de Facultat, de nou, a Astrofísica Verda_**
 
 Taula transaccional
 
 | **Id_Estudiant** | **Nom Complet** | **Facultat**      |
 | :--------------: | :-------------- | :---------------: |
-| EST12345         | Jordi Ferrer    | Astrofísica verda |
+| EST12345         | Jordi Ferrer    | Astrofísica Verda |
 
 Taula de dimensió (després de l'ETL)
 
 | **Id_Estudiant** | **Codi_Estudiant** | **Nom Complet** | **Facultat_antiga** | **Facultat_nova** | **Data_inici** | **Data_final** | **Facultat_actual** |
 | :---------------: | :---------------: | :-------------- | :-----------------: | :---------------: | :------------: | :------------: | :----------------: |
-| 1                | EST12345           | Jordi Ferrer    |                     | Astrofísica verda | 18/08/2023     | 19/08/2023     | N                  |
-| 2                | EST12345           | Jordi Ferrer    | Astrofísica verda   | Clima salat       | 19/08/2023     | 20/08/2023     | N                  |
-| 3                | EST12345           | Jordi Ferrer    | Clima salat         | Astrofísica verda | 20/08/2023     |                | Y                  |
+| 1                | EST12345           | Jordi Ferrer    |                     | Astrofísica Verda | 18/08/2023     | 19/08/2023     | N                  |
+| 2                | EST12345           | Jordi Ferrer    | Astrofísica Verda   | Clima salat       | 19/08/2023     | 20/08/2023     | N                  |
+| 3                | EST12345           | Jordi Ferrer    | Clima salat         | Astrofísica Verda | 20/08/2023     |                | Y                  |
 
 #### SCD-7 (Híbrid: clau subrogada i natural)
 

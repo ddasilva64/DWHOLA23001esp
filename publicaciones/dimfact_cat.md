@@ -1,4 +1,4 @@
-# Dimensions i Fets - cat -
+# Modelat dimensional (dimensions i fets) - cat -
 
 Per construir un **_dm_**, cal tenir en compte un conjunt de tècniques i conceptes per dissenyar el nostre **_DWH_**. Una part fonamental d'aquest és la tipologia de taules on desem les dades.
 

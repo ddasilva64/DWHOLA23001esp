@@ -1,4 +1,4 @@
-# Modelado dimensional (dimensiones y hechos)
+# Modelado dimensional (dimensiones y hechos) - esp -
 
 Para construir un **_dm_**, es necesario tener en cuenta un conjunto de técnicas y conceptos para diseñar nuestro **_DWH_**. Una parte fundamental de esto es la tipología de tablas donde almacenamos los datos.
 

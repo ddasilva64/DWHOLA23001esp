@@ -1,4 +1,4 @@
-# Dimensional Modeling (Dimensions and Facts)
+# Dimensional Modeling (Dimensions and Facts) - eng -
 
 To build a **_dm_**, it is necessary to consider a set of techniques and concepts to design our **_DWH_**. A fundamental part of this is the type of tables where we store the data.
 
